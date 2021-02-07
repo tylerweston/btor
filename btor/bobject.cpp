@@ -5,11 +5,13 @@ namespace be
 {
 	BObject::BObject()
 	{
+		// Default constructor will make a null-type BObject
 		type = BObject_t::BNull;
 	}
 
 	BObject::BObject(const BObject_t initType)
 	{
+		// If we're given a type, initialize an empty object of that type
 		type = initType;
 	}
 
@@ -42,22 +44,25 @@ namespace be
 
 	BObject::BObject(int64_t initInt) : intVal(initInt)
 	{
+		// If we're given an int, initialize this as an integer BObject
 		type = BObject_t::BInteger;
 	}
 
 	BObject::BObject(std::string initString) : stringVal(initString)
 	{
-		// string initializer for a BObject class
+		// String initializer for a BObject class
 		type = BObject_t::BString;
 	}
 
 	BObject::BObject(std::vector<BObject*> initList) : listVal(initList)
 	{
+		// If we get a list of BObjects, create a list
 		type = BObject_t::BList;
 	}
 
 	BObject::BObject(std::map<std::string, BObject*> initDict) : dictVal(initDict)
 	{
+		// Initialize a dictioanry
 		type = BObject_t::BDict;
 	}
 
@@ -78,6 +83,22 @@ namespace be
 			throw BTypeException();
 		}
 		dictVal.insert({ key, val });
+	}
+
+	const bool BObject::checkIfHasKey(std::string const searchKey) const
+	{
+		if (type != BObject_t::BDict)
+		{
+			throw BTypeException();
+		}
+		for (auto& key : dictVal)
+		{
+			if (key.first == searchKey)
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 	const BObject* BObject::getByKey(std::string const searchKey) const

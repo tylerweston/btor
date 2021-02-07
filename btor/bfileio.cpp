@@ -12,7 +12,7 @@ bf::fileio::~fileio()
 	std::cout << "Cleaning up fileio...\n";
 }
 
-void bf::fileio::read_file(const char* const filename)
+void bf::fileio::readFile(const char* const filename)
 {
 
 	std::cout << "Opening file " << filename << '\n';

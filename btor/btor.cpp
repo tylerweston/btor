@@ -1,6 +1,11 @@
 #include "bencode.h"
 #include "bfileio.h"
+#include "bhttp.h"
+#include "butils.h"
+#include "sha1.hpp"	// move this to a different scope?
 #include <iostream>
+#include <stdlib.h>
+
 
 /*
 // Algorithm: template<typename T> void lock( T& t, F f ) { lock_guard hold(t); f(); }
@@ -61,19 +66,83 @@ vector<int>     v   { 1, 2, 3, 4 };
 
 int main()
 {
+
 	// process command line arguments
 	// at the bare minimum should take in a .torrent file
+
 	const char* filename = "mice_and_men.torrent";
-	//const char* filename = "bencode_dict_test.torrent";
-	//const char* filename = "bencode_test_list.torrent";
-	//const char* filename = "bencode_test_string.torrent";
-	//const char* filename = "bencode_test_list_of_list.torrent";
+
 	bf::fileio fileManager;
-	fileManager.read_file(filename);
+	fileManager.readFile(filename);
 	be::BParser bParser;
 	be::BMemoryManager bMemoryManager;
 	be::BObject* root = bParser.parseBencodedString(fileManager.getFileBuf(), &bMemoryManager);
-	// doesn't look like this root is being returned properly, have to figure out why!
-	// printing it is throwing an error :(
-	std::cout << "Root: " << *root << '\n';
+	// std::cout << "Root: " << *root << '\n';
+		
+	const std::string input = bParser.getCollectedInfoDict();
+	SHA1 checksum;
+	checksum.update(input);
+	const std::string hash = checksum.final();
+
+	// events
+	// must send started in first request
+	// stopped is sent if the client is shutting down gracefully
+	// completed is sent when a tracker completes a download. DON'T send if the download was 100% when client started.
+	std::string uniqueId = generateId();
+	int totalLength = bParser.getCollectedLength();
+	std::string announcer = *root->getByKey("announce")->getString();
+	std::cout << "Announcer: " << announcer << '\n';
+	std::string address = announcer;
+
+	// send a start request
+	std::string encodedHash = urlEncode(hash);
+
+	auto builtAddress = buildGetRequest(address, encodedHash, uniqueId, totalLength, "started");
+	std::cout << "Address: " << builtAddress << '\n';
+	std::string response;
+	std::cout << "Waiting for response from server...\n";
+	response = testGet(builtAddress, {});
+	std::cout << "Got response from server: " << response << '\n';
+	std::vector<char> charResponse(response.begin(), response.end());
+	be::BObject* serverResponseParser =  bParser.parseBencodedString(&charResponse, &bMemoryManager);
+	std::cout << "Server response: " << *serverResponseParser << '\n';
+	// send a stop request
+	builtAddress = buildGetRequest(address, encodedHash, uniqueId, totalLength, "stopped");
+	response = testGet(builtAddress, {});
+	exit(EXIT_SUCCESS);
+	
+	// OK so the Root is a metainfo file structure that will contain some useful information for us:
+	// info: a dictionary describing the file(s) in the torrent (this will be either single-file or multi-file) (how to tell? if it's a list or not?)
+	// announce: the announce URL of the tracker
+	// announce-list (optional): list of list of strings (for backwards compat.) DON'T DEAL WITH IT!
+	// creation-date (optional): (UNIX epoch format)
+	// comment (optional): free form comment from author of torrent
+	// created by (optional): name and version of the program used to create the .torrent
+	// encoding (optional): string encoding format used to generate the pieces part of the info dictionary
+
+	// info dictionary:
+	// piece length: number of bytes in each piece
+	// pieces: string consisting of the concat. of all 20-byte sha1 hash values, one per piece (byte string)
+	// private (optional)
+
+	// single-file:
+	// name: filename (advisory, you can choose a different name?)
+	// length: length of file in bytes (integer)
+	// md5sum (optional)
+
+	// multi-file
+	// name: name of directory to store all files to (advisory)
+	// files: list of dictionaries, one per file. Each dictionary contains:
+	//	length: length of this file in bytes (integer)
+	//	md5sum (optional)
+	//	path: a list containing one or more string elements that together represent the path and filename.
+	//		each element corresponds to a directory name, and the final element is the name of the file.
+	//		ie. the file "dir1/dir2/file.ext" would consist of three string elements: "dir1", "dir2", and 
+	//		"file.ext". This is encoded as a bencoded list of strings such as l4:dir14:dir28:file.exte
+
+	// so next step will be reading the bencoded string and putting the information into a more friendly
+	// format for us to continue to use
+
+	// create a metainfo class to deal with this!
 }
+

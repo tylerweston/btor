@@ -48,6 +48,7 @@ namespace be
 	BObject* BParser::parseBencodedString(const std::vector<char>* toParse, BMemoryManager* bMemoryManager)
 	{
 		// Setup parser
+		this->cursor = 0;
 		this->_parseBuf = toParse;
 		this->_bMemoryManager = bMemoryManager;
 
@@ -96,6 +97,10 @@ namespace be
 	{
 		// TODO: Make sure we have enough characters left to consume one
 		char tmp = this->_parseBuf->at(this->cursor);
+		if (this->collectInfoDict)
+		{
+			this->collectedInfoDict += tmp;
+		}
 		++cursor;
 		return tmp;
 	}
@@ -120,16 +125,39 @@ namespace be
 		BObject* bObj = this->_bMemoryManager->getNewBObject(BObject_t::BDict);
 		std::string curKey;
 		BObject* curVal;
+		bool grabLength = false;
 		do
 		{
+			grabLength = false;
 			// first we can extract the next string as the key
 			curKey = extractString();
+			if (curKey == "info")
+			{
+				this->collectInfoDict = true;
+			}
+			else if (curKey == "length")
+			{
+				grabLength = true;
+			}
 			// TODO: Make sure we got a string here?
 			curVal = parseArbitrary();
+			if (curKey == "info")
+			{
+				this->collectInfoDict = false;
+			}
+			else if (curKey == "length")
+			{
+				this->collectedLength += *curVal->getInt();
+			}
 			bObj->addKeyValue(curKey, curVal);
 		} while (peekChar() != 'e');
 		consumeChar();	// eat the 'e' we just saw
 		return bObj;
+	}
+
+	int BParser::getCollectedLength()
+	{
+		return this->collectedLength;
 	}
 
 	std::string BParser::extractString()
@@ -228,6 +256,11 @@ namespace be
 		return bObj;
 	}
 
+	std::string BParser::getCollectedInfoDict()
+	{
+		return this->collectedInfoDict;
+	}
+
 	BMemoryManager::BMemoryManager()
 	{
 		// do initialization here
@@ -243,24 +276,10 @@ namespace be
 		}
 	}
 
-	BObject* BMemoryManager::getNewBObject(BObject_t objType)
+	template <typename T>
+	BObject* BMemoryManager::getNewBObject(T obj)
 	{
-		BObject* bObj = new BObject(objType);
-		BObjects.push_back(bObj);
-		return bObj;
-	}
-
-	// TODO: Template these?
-	BObject* BMemoryManager::getNewBObject(std::string initString)
-	{
-		BObject* bObj = new BObject(initString);
-		BObjects.push_back(bObj);
-		return bObj;
-	}
-
-	BObject* BMemoryManager::getNewBObject(int64_t intVal)
-	{
-		BObject* bObj = new BObject(intVal);
+		BObject* bObj = new BObject(obj);
 		BObjects.push_back(bObj);
 		return bObj;
 	}

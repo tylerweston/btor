@@ -66,6 +66,7 @@ namespace be
 		BObject(std::map<std::string, BObject*>);
 		BObject_t getType() const { return this->type; }
 		void setType(BObject_t type) { this->type = type;  }
+		const bool checkIfHasKey(std::string const searchKey) const;
 		const BObject* getByKey(std::string const) const;
 		void addKeyValue(const std::string key, BObject* val);
 		const int64_t* getInt() const;
@@ -85,9 +86,7 @@ namespace be
 		// will be responsible for managing all of the memory
 		BMemoryManager();
 		~BMemoryManager();
-		BObject* getNewBObject(BObject_t);
-		BObject* getNewBObject(std::string initString);
-		BObject* getNewBObject(int64_t intVal);
+		template <typename T> BObject* getNewBObject(T);
 	};
 
 	class BParser
@@ -96,6 +95,9 @@ namespace be
 		unsigned int cursor;
 		BMemoryManager* _bMemoryManager;
 		const std::vector<char>* _parseBuf;
+		bool collectInfoDict = false;
+		int collectedLength = 0;
+		std::string collectedInfoDict;
 	public:
 		// will be responsible for parsing the bencoded string
 		BParser();
@@ -109,6 +111,8 @@ namespace be
 		std::string extractString();
 		BObject* parseList();
 		BObject* parseInteger();
+		std::string getCollectedInfoDict();
+		int getCollectedLength();	// eventually move this to butils and make it find these
 	};
 
 	std::ostream& operator<<(std::ostream& os, const BObject& bo);

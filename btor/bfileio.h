@@ -10,7 +10,7 @@ namespace bf
 		public:
 			fileio();
 			~fileio();
-			void read_file(const char* const filename);
+			void readFile(const char* const filename);
 			std::vector<char>* const getFileBuf();
 	};
 }

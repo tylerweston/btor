@@ -143,12 +143,20 @@
   <ItemGroup>
     <ClCompile Include="bencode.cpp" />
     <ClCompile Include="bfileio.cpp" />
+    <ClCompile Include="bhttp.cpp" />
     <ClCompile Include="bobject.cpp" />
+    <ClCompile Include="bsha1.cpp" />
     <ClCompile Include="btor.cpp" />
+    <ClCompile Include="butils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bencode.h" />
     <ClInclude Include="bfileio.h" />
+    <ClInclude Include="bhttp.h" />
+    <ClInclude Include="bsha1.h" />
+    <ClInclude Include="butils.h" />
+    <ClInclude Include="HTTPRequest.hpp" />
+    <ClInclude Include="sha1.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

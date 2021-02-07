@@ -27,12 +27,36 @@
     <ClCompile Include="bobject.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="bsha1.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="bhttp.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="butils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bfileio.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="bencode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="bsha1.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="bhttp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="HTTPRequest.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="sha1.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="butils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
