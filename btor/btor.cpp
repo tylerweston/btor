@@ -13,8 +13,8 @@ int main()
 
 	// process command line arguments
 	// at the bare minimum should take in a .torrent file
-	//const char* torrentFilename = "mice_and_men.torrent";
-	const char* torrentFilename = "ubuntu2010.torrent";
+	const char* torrentFilename = "mice_and_men.torrent";
+	//const char* torrentFilename = "ubuntu2010.torrent";
 
 	// we use ONE unique id per session, so let's generate it now
 	std::string uniqueId = generateId();
@@ -87,6 +87,8 @@ int main()
 	// Deal with binary first
 
 	// TODO: Find a tracker with more peers to test this
+	// In peers binary model, this will be a string, in dictionary mode this will be a dictionary
+
 	std::string peers = *serverResponseParser->getByKey("peers")->getString();	// if this fails, we have a dictionary
 	// We'll want to convert this string response into some uint_8s first
 	std::cout << "Peers: ";
@@ -103,6 +105,7 @@ int main()
 		std::cout << i++ << ':' << p << '\n';
 	}
 
+	std::cout << "Peer addresses:\n";
 	for (char& ch : peers)
 	{
 		std::cout << std::hex << "Ox" << (int)static_cast<unsigned char>(ch) << ' ';	// ewww... figure out a better way to do this
@@ -114,7 +117,7 @@ int main()
 
 	// send a stop request
 	builtAddress = buildAnnounceParameters(metainfo, uniqueId, "stopped");
-	response = makeGetRequest(builtAddress, {});
+	response = makeGetRequest(serverAddr, "/" + announcePath + builtAddress);
 	exit(EXIT_SUCCESS);
 
 }

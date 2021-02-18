@@ -1,5 +1,4 @@
 #define CPPHTTPLIB_OPENSSL_SUPPORT
-#pragma comment(lib, "ws2_32.lib")
 #include "httplib.h"
 #include "bhttp.h"
 #include <iostream>
@@ -15,6 +14,7 @@ std::string makeGetRequest(const std::string address, const std::string path)
     {
         std::cout << res->status;
         std::cout << res->body;
+        return res->body;
     }
     else
     {
@@ -44,7 +44,7 @@ std::string buildAnnounceParameters(Metainfo& metainfo, std::string peer_id, std
     const std::string encodedHash = urlEncode(hash);
     // build our announce path
     return "?info_hash=" + encodedHash + "&peer_id=" + peer_id +
-        "&uploaded=0&downloaded=0&left=" + std::to_string(metainfo.totallength) + "&event=" + bEvent;
+        "&uploaded=0&downloaded=0&left=" + std::to_string(metainfo.totallength) + "&event=" + bEvent + "&port=6886";
 }
 
 std::string getServerAddress(std::string announceUrl)

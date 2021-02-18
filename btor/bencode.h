@@ -96,7 +96,7 @@ namespace be
 		BMemoryManager* _bMemoryManager;
 		const std::vector<char>* _parseBuf;
 		bool collectInfoDict = false;
-		int collectedLength = 0;
+		long long int collectedLength = 0;
 		std::string collectedInfoDict;
 	public:
 		// will be responsible for parsing the bencoded string
@@ -112,7 +112,7 @@ namespace be
 		BObject* parseList();
 		BObject* parseInteger();
 		std::string getCollectedInfoDict();
-		int getCollectedLength();	// eventually move this to butils and make it find these
+		long long int getCollectedLength();	// eventually move this to butils and make it find these
 	};
 
 	std::ostream& operator<<(std::ostream& os, const BObject& bo);
