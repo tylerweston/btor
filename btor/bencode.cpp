@@ -155,7 +155,7 @@ namespace be
 		return bObj;
 	}
 
-	int BParser::getCollectedLength()
+	long long int BParser::getCollectedLength()
 	{
 		return this->collectedLength;
 	}
