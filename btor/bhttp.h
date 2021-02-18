@@ -1,6 +1,12 @@
 #pragma once
 #include <map>
 #include <string>
+#include "sha1.hpp"
+#include "btor.h"
+#include "butils.h"
 
-std::string testGet(std::string address, std::map<std::string, std::string> parameters);
-std::string buildGetRequest(std::string addr, std::string info_hash, std::string id, int length, std::string bEvent);
+std::string makeGetRequest(std::string address, std::string path);
+std::string buildAnnounceParameters(Metainfo& metainfo, std::string peer_id, std::string bEvent);
+std::string getServerAddress(std::string announceUrl);
+std::string getAnnouncePath(std::string announceUrl);
+std::string helpfulHttpLibError(int errorNo);

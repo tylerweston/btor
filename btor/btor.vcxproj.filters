@@ -36,6 +36,9 @@
     <ClCompile Include="butils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="bpeer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bfileio.h">
@@ -57,6 +60,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="butils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="btor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="bpeer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -1,75 +1,93 @@
+#define CPPHTTPLIB_OPENSSL_SUPPORT
+#pragma comment(lib, "ws2_32.lib")
+#include "httplib.h"
 #include "bhttp.h"
-#pragma comment(lib, "ws2_32.lib")  // based on: https://github.com/elnormous/HTTPRequest/issues/17
-#include "HTTPRequest.hpp"
 #include <iostream>
 
-std::string testGet(std::string address, std::map<std::string, std::string> parameters)
+std::string makeGetRequest(const std::string address, const std::string path)
 {
-    // Ok, so this is sending and receiving messages, good stuff
-    try
+    // we want to return the response as a string from here
+    std::cout << "Server address is: " << address.c_str() << '\n';
+    httplib::Client cli(address.c_str());
+    std::cout << "Built client, making get request\n";
+    std::cout << "path is: " << path.c_str() << '\n';
+    if (auto res = cli.Get(path.c_str()))
     {
-        // you can pass http::InternetProtocol::V6 to Request to make an IPv6 request
-        http::Request request(address);
-
-        // send a get request
-        // build parameters here
-        const http::Response response = request.send("GET", parameters, {"Content-Type: none", "User-Agent: btor", "Accept: */*", "Connection: Close"});
-
-        // get the result here
-        // std::cout << std::string(response.body.begin(), response.body.end()) << '\n'; // print the result
-        std::string res(response.body.begin(), response.body.end());
-        return res;
+        std::cout << res->status;
+        std::cout << res->body;
     }
-    catch (const std::exception& e)
+    else
     {
-        std::cerr << "Request failed, error: " << e.what() << '\n';
+        auto err = res.error();
+        std::cerr << "Error: " << helpfulHttpLibError(err) << '\n';
+        std::cerr << "Ooops! Problem! Exit!";
+        exit(EXIT_FAILURE);
     }
+    return "DUMMY";
 }
 
-
-std::string //std::map<std::string, std::string> 
-buildGetRequest(std::string addr, std::string info_hash, std::string peer_id, int length, std::string bEvent)
+std::string buildAnnounceParameters(Metainfo& metainfo, std::string peer_id, std::string bEvent)
 {
-    return addr + "?info_hash=" + info_hash + "&peer_id=" + peer_id + "&uploaded=0&downloaded=0&left=" + std::to_string(length) + "&event=" + bEvent;
-    
-    //std::map<std::string, std::string> requestDict = { {"info_hash", info_hash}, 
-    //    {"peer_id",  peer_id}, /*{"ip", "104.206.12.211"},*/ {"port", "6881"},  {"compact", "1"},
-    //    {"uploaded", "0"}, {"downloaded", "0"}, {"left", std::to_string(length)},
-    //    /*{"event", bEvent}*/ };
-    //return requestDict;
+    // TODO: This SHA calculation should happen somewhere else
+    // TODO: hmm, is this a namespace clash thing with something else now?
+    sha1::SHA1 checksum;
+    checksum.update(metainfo.infodict);
+    const std::string hash = checksum.final();
+    //// TODO: We need to move this SHA1 stuff somewhere else now since it's an issue with
+    //// the openssl library
+    //const unsigned char* unsignedHashStr = reinterpret_cast<const unsigned char*> (metainfo.infodict.c_str());
+    //size_t hashSize = metainfo.infodict.size();
+    //unsigned char shaOut[20];
 
-    //std::cout << "SHA1 info hash: " << hash << '\n';
-    //std::cout << "Unique id is: " << generateId() << '\n';
-    //int port = 6881;
-    //std::cout << "What port we're listening on: " << port << '\n';
-    //// uploaded and downloaded both start at 0	?
-    //std::cout << "Uploaded: 0\n";
-    //std::cout << "Downloaded: 0\n";
-    //std::cout << "Left: ???\n";		// figure out size of torrent we need to download
-    //std::cout << "Compact: 1\n";	// beconded peer list is replaced by a peer string with 6 bytes/peer. 4 bytes host (network order), then 2 byte port (network order)
-    //// events
-    //// must send started in first request
-    //// stopped is sent if the client is shutting down gracefully
-    //// completed is sent when a tracker completes a download. DON'T send if the download was 100% when client started.
-    //std::cout << "event: started / stopped / completed\n";
+    //sha1::SHA1(unsignedHashStr, hashSize, shaOut);
+    //unsigned char hash[20];
+    const std::string encodedHash = urlEncode(hash);
+    // build our announce path
+    return "?info_hash=" + encodedHash + "&peer_id=" + peer_id +
+        "&uploaded=0&downloaded=0&left=" + std::to_string(metainfo.totallength) + "&event=" + bEvent;
+}
 
+std::string getServerAddress(std::string announceUrl)
+{
+    // takes in something like https://torrent.ubuntu.com/announce and just return the server address
+    // part, in this case https://torrent.ubunutu.com
+    const unsigned int pathSeperatorIndex = announceUrl.find_last_of('/');
+    if (pathSeperatorIndex == std::string::npos)
+    {
+        std::cerr << "Error: Cannot extract server address from " << announceUrl << '\n';
+        exit(EXIT_FAILURE);
+    }
+    return announceUrl.substr(0, pathSeperatorIndex);
+}
 
-    // tracker get requests have the following keys
-    // info_hash: 20 byte sha1 hash of the bencoded form of the info value from metainfo file. will have to be escaped (urlencoded?)
-    // peer_id: string of length 20 randomly generated at the start of a new download
-    // ip: optional
-    // port: port we're listening on. start at 6881, then try 6882, etc., up to 6889
-    // uploaded: the total amount uploaded so far, base 10 ascii
-    // downloaded: the total amount downloaded so far, base 10 ascii
-    // left: the number of bytes this peer still needs to download, in base 10
-    // event: optional (started, completed, or stopped)
+std::string getAnnouncePath(std::string announceUrl)
+{
+    // takes in something like https://torrent.ubuntu.com/announce and just return the announce path part
+    // part, in this case announce
+    const unsigned int pathSeperatorIndex = announceUrl.find_last_of('/');
+    if (pathSeperatorIndex == std::string::npos)
+    {
+        std::cerr << "Error: Cannot extract announce path from " << announceUrl << '\n';
+        exit(EXIT_FAILURE);
+    }
+    return announceUrl.substr(pathSeperatorIndex + 1);
+}
 
-    // the trackers response will be a bencoded dictionary
-    // if the tracker response has a key failure reason, then that maps to a human readable string that explains why the query failed, and no other keys
-    // others there are two keys:
-    //  - interval: maps to the number of seconds the downloader should wait between regular reqreuests
-    //  - peers: peers maps to a list of dictionaries corresponding to peers, each of which contains the following keys:
-    //      - peer id: the peers self-selected ID
-    //      - ip: IP address or dns name as a string
-    //      - port: the port number the machine is using
+std::string helpfulHttpLibError(int errorNo)
+{
+    const std::string Errors[12]{
+        "Success",
+        "Unknown",
+        "Connection",
+        "BindIPAddress",
+        "Read",
+        "Write",
+        "ExceedRedirectCount",
+        "Canceled",
+        "SSLConnection",
+        "SSLLoadingCerts",
+        "SSLServerVerification",
+        "UnsupportedMultipartBoundaryChars"
+    };
+    return Errors[errorNo];
 }
