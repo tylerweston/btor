@@ -1,7 +1,10 @@
 #include "pch.h"
 #include "CppUnitTest.h"
+#include "CppUnitTestAssert.h"
 #include "../btor/bencode.h"
 
+// when you add more tests, remember to add the .obj file they depend on to the additional
+// dependencies list under linker > input > additional dependencies
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace btorunittests
@@ -20,8 +23,10 @@ namespace btorunittests
 		TEST_METHOD(BObject_BList_Length_Test)
 		{
 			be::BObject blist(be::BObject_t::BList);
-			blist.pushBack(be::BObject(12));
-			blist.pushBack(be::BObject("Test"));
+			be::BObject bint(12);
+			be::BObject bstr("Test");
+			blist.pushBack(&bint);
+			blist.pushBack(&bstr);
 			Assert::AreEqual(blist.getLength(), (unsigned int) 2);
 		}
 		// TODO: More unit tests!
