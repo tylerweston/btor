@@ -88,7 +88,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <AdditionalIncludeDirectories>C:\Program Files %28x86%29\OpenSSL-Win32\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -106,7 +106,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <AdditionalIncludeDirectories>C:\Program Files %28x86%29\OpenSSL-Win32\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -152,7 +152,7 @@
     <ClCompile Include="bhttp.cpp" />
     <ClCompile Include="bobject.cpp" />
     <ClCompile Include="bpeer.cpp" />
-    <ClCompile Include="bsha1.cpp" />
+    <ClCompile Include="bsock.cpp" />
     <ClCompile Include="btor.cpp" />
     <ClCompile Include="butils.cpp" />
   </ItemGroup>
@@ -161,7 +161,6 @@
     <ClInclude Include="bfileio.h" />
     <ClInclude Include="bhttp.h" />
     <ClInclude Include="bpeer.h" />
-    <ClInclude Include="bsha1.h" />
     <ClInclude Include="btor.h" />
     <ClInclude Include="butils.h" />
     <ClInclude Include="HTTPRequest.hpp" />

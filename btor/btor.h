@@ -15,7 +15,7 @@ struct Metainfo
 	std::string announce;					// announce URL
 	std::string infodict;					// the bencoded string that represents the info dictionary
 	std::vector<struct Fileinfo> fileinfo;	// one for single file, many for multifile
-	long long int totallength;					// total size of the file in bytes
+	long long int totallength;				// total size of the file in bytes
 	int64_t piecelength;					// number of bytes in each piece
 	std::string pieces;						// Concatenation of all 20-byte SHA1 hash values, one per piece, byte string
 };

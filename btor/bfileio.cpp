@@ -26,7 +26,6 @@ void bf::fileio::readFile(const char* const filename)
 	// get length of file
 	infile.seekg(0, std::ios::end);
 	size_t length = infile.tellg();
-	std::cout << "Size of file: " << length << '\n';
 	// allocate space for reading the file
 	filebuf = new std::vector<char>(length);
 	// rewind file pointer

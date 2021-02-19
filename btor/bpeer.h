@@ -2,6 +2,7 @@
 #include <array>
 #include <stdint.h>
 #include <string>
+#include <WinSock2.h>
 
 //Data Types
 // Unless specified otherwise, all integers in the peer wire protocol are encoded as four byte big - endian values.
@@ -31,13 +32,33 @@
 
 // will the peers keep track of their own address? I suppose so?
 
+// choked = has the remote peer choked the client? when a peer chokes a client, it is a notification that NO requests will be answered until
+// the client is unchoked. The client should not attempt to send requests for blocks, and it should consider all pending (unanswered) requests 
+// to be discarded.
+// interested = whether or not the remote peer is interested in somthing this client has to offer in the remote peer, and if it has the remote
+// peer choked or unchoked.
+
+// client connections start out as CHOKED and NOT INTERESTEED
+
+// a block is downloaded by the client when the client is interested in a peer, and that peer is not choking the client.
+// a block is uploaded by a client the client is not choking a peer, and that peer is interested in the client.
+// IMPORTANT for the client to keep its peers informed as to whether or not it is interested in them.
+// This state information should be kept up-to-date with each peer even when the client is choked.
+// This will allow peers to know if the client will begin downloading when it is unchoked (and vice-versa)
+
+// Data Types: All integers in the peer wire protocol are encoded as four byte big-endian values.
+// This includes the length prefix on all messages after the handshake.
+// note that winsock2 has a htonl (host to network long) and ntohl (network to host lost)
+// check endianness to see if we need to use htonl and then ntohl
+
+
 class BPeer
 {
 private:
-	bool amChoking;
-	bool amInterested;
-	bool peerChoking;
-	bool peerInterested;
+	bool amChoking = true;
+	bool amInterested = false;
+	bool peerChoking = true;
+	bool peerInterested = false;
 	std::string _id;
 	std::array<uint8_t, 4> addr;
 	std::array<uint8_t, 2> port;

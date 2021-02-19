@@ -6,14 +6,11 @@
 std::string makeGetRequest(const std::string address, const std::string path)
 {
     // we want to return the response as a string from here
-    std::cout << "Server address is: " << address.c_str() << '\n';
     httplib::Client cli(address.c_str());
-    std::cout << "Built client, making get request\n";
-    std::cout << "path is: " << path.c_str() << '\n';
     if (auto res = cli.Get(path.c_str()))
     {
-        std::cout << res->status;
-        std::cout << res->body;
+        // TODO: check response status here!
+        //std::cout << res->status;
         return res->body;
     }
     else
@@ -29,18 +26,12 @@ std::string makeGetRequest(const std::string address, const std::string path)
 std::string buildAnnounceParameters(Metainfo& metainfo, std::string peer_id, std::string bEvent)
 {
     // TODO: This SHA calculation should happen somewhere else
-    // TODO: hmm, is this a namespace clash thing with something else now?
+    // TODO: We can use the openssl SHA1 thing so we don't need an extra library!
     sha1::SHA1 checksum;
     checksum.update(metainfo.infodict);
     const std::string hash = checksum.final();
-    //// TODO: We need to move this SHA1 stuff somewhere else now since it's an issue with
-    //// the openssl library
-    //const unsigned char* unsignedHashStr = reinterpret_cast<const unsigned char*> (metainfo.infodict.c_str());
-    //size_t hashSize = metainfo.infodict.size();
-    //unsigned char shaOut[20];
 
-    //sha1::SHA1(unsignedHashStr, hashSize, shaOut);
-    //unsigned char hash[20];
+
     const std::string encodedHash = urlEncode(hash);
     // build our announce path
     return "?info_hash=" + encodedHash + "&peer_id=" + peer_id +
