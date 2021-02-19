@@ -26,10 +26,10 @@ jobs:
       run: nuget restore ${{env.SOLUTION_FILE_PATH}}
       
     - name: Install openssl
-      run: choco install openssl
+      run: choco install openssl --no-progress
 
     - name: Build
       working-directory: ${{env.GITHUB_WORKSPACE}}
       # Add additional options to the MSBuild command line here (like platform or verbosity level).
       # See https://docs.microsoft.com/visualstudio/msbuild/msbuild-command-line-reference
-      run: msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} ${{env.SOLUTION_FILE_PATH}}
+      run: msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} ${{env.SOLUTION_FILE_PATH}} /std:c++17 /I C:\Program Files\OpenSSL-Win64\include\
