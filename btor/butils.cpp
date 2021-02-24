@@ -1,10 +1,27 @@
 #include "butils.h"
 #include "btor.h"
+#include "sha1.hpp"
 
-int32_t changeEndianness(int32_t const num)
+
+void getSHA1(Metainfo& metainfo)
 {
-	// TODO: We don't need this, use WinSock2 htonl and ntohl for this!
-	return ((num >> 24 | (num & 0x00FF0000) >> 8 | (num & 0x0000FF00) << 8 | num << 24));
+	sha1::SHA1 checksum;
+	checksum.update(metainfo.infodict);
+	std::vector<uint32_t> res;
+	res = checksum.final();
+	std::cout << "sizeof res: " << res.size() << '\n';
+	std::ostringstream result;
+	for (size_t i = 0; i < res.size(); i++)
+	{
+		result << std::hex << std::setfill('0') << std::setw(8);
+		result << res[i];
+	}
+	std::cout << "Trying to build info_hash, got hex string: " << result.str() << '\n';
+	metainfo.info_hash_hex = result.str();
+	//metainfo.
+	// todo: info_hash_raw should be converted to an array of uint8_t now
+	//std::string hash = checksum.final();
+	//return hash;
 }
 
 std::string generateId()
@@ -32,18 +49,7 @@ std::string urlEncode(std::string inputString)
 	return encodedString;
 }
 
-bool is_big_endian(void)
-{
-	union {
-		uint32_t i;
-		char c[4];
-	} bint = { 0x01020304 };
-
-	return bint.c[0] == 1;
-}
-
-
-void fillMetainfo(Metainfo& metainfo, be::BParser& bParser)
+void fillMetainfo(Metainfo& metainfo, BParser& bParser)
 {
 	// fill in a given metainfo struct with information from the bParser
 

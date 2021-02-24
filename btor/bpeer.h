@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <string>
 #include <WinSock2.h>
+#include <btor.h>
 
 //Data Types
 // Unless specified otherwise, all integers in the peer wire protocol are encoded as four byte big - endian values.
@@ -51,13 +52,18 @@
 // note that winsock2 has a htonl (host to network long) and ntohl (network to host lost)
 // check endianness to see if we need to use htonl and then ntohl
 
+// we'll make this peer object responsible for decoding and sending messages to the main loop?
+
+// "suggest those X blocks which have been requested the fewest number of times, 
+//	and have not been received"
+
 
 class BPeer
 {
 private:
 	bool amChoking = true;
 	bool amInterested = false;
-	bool peerChoking = true;
+	bool peerChoking = true;		// when a peer is choking us, we don't send them messages and discard unanswered requests
 	bool peerInterested = false;
 	std::string _id;
 	std::array<uint8_t, 4> addr;
@@ -71,5 +77,51 @@ public:
 	void setAmInterested(bool val) { this->amInterested = val; }
 	void setPeerChoking(bool val) { this->peerChoking = val; }
 	void setPeerInterested(bool val) { this->peerInterested = val; }
+	static std::string getHandshake(BState* state);
 };
 
+// messages?
+
+struct handshake
+{
+	// <pstrlen><pstr><reserved><info_hash><peer_d>
+	// in version 1.0 of bittorrent protocol, pstrlen = 49, pstr = "BitTorrent protocol"
+	UINT8 pstrlen;			// string length of pstr as a single raw byte
+	std::string pstr;		// string identifier of protocol
+	UINT8 reserved[8]{ 0 };	// 8 reserved bytes, currently all 0
+	std::string info_hah[20];		// 20 byte hash of info-dict
+	std::string peer_id;	// out unique ID we sent to the server
+};
+
+struct have
+{
+	UINT32 piece_index;		// 0 based index of piece we've received and verified via hash, IS THIS 32-bits?
+};
+
+struct bitfield
+{
+	/*
+	The right length is equal to payload_piece_count + (8 - payload_piece_count % 8). 
+	Each piece is encoded as one bit, so we have 8 piece per byte. In the case of 1592 pieces, 
+	there should be 199 bytes, and no spare bits. In the case of 1595 pieces, there should be 
+	200 bytes, and 5 spare bits (200 x 8 -1595 ). Of course this is only for X (from len=0001+X ).
+	*/
+};
+
+// is this an ok way to do it?
+// a message is a len, an id, and then a payload
+enum class messages
+{
+	handshake = -2,			// say hello to a peer
+	keepAlive = -1,			// don't get disconnected
+	choke = 0,				// 
+	unchoke = 1,
+	interested = 2,
+	notInterested = 3,
+	have = 4,				// we just got and verified a new piece
+	bitfield = 5,			// which pieces we already have available
+	request = 6,			// we're looking for a piece!
+	piece = 7,				// some data that makes up a piece
+	cancel = 8,				// cancel a block request we've made
+	port = 9				// only if DHT tracker is supported? Don't implement?
+};

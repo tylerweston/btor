@@ -26,6 +26,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <vector>
 
 namespace sha1
 {
@@ -35,8 +36,7 @@ namespace sha1
         SHA1();
         void update(const std::string& s);
         void update(std::istream& is);
-        std::string final();
-        static std::string from_file(const std::string& filename);
+        std::vector<uint32_t> final();
 
     private:
         uint32_t digest[5];
@@ -275,7 +275,9 @@ namespace sha1
      * Add padding and return the message digest.
      */
 
-    inline std::string SHA1::final()
+    //inline std::string SHA1::final()
+    //inline uint32_t* SHA1::final()
+    inline std::vector<uint32_t> SHA1::final()
     {
         /* Total number of hashed bits */
         uint64_t total_bits = (transforms * BLOCK_BYTES + buffer.size()) * 8;
@@ -305,26 +307,9 @@ namespace sha1
         block[BLOCK_INTS - 2] = (uint32_t)(total_bits >> 32);
         transform(digest, block, transforms);
 
-        /* Hex std::string */
-        std::ostringstream result;
-        for (size_t i = 0; i < sizeof(digest) / sizeof(digest[0]); i++)
-        {
-            result << std::hex << std::setfill('0') << std::setw(8);
-            result << digest[i];
-        }
-
         /* Reset for next run */
+        std::vector<uint32_t> res(digest, digest + 5);
         reset(digest, buffer, transforms);
-
-        return result.str();
-    }
-
-
-    inline std::string SHA1::from_file(const std::string& filename)
-    {
-        std::ifstream stream(filename.c_str(), std::ios::binary);
-        SHA1 checksum;
-        checksum.update(stream);
-        return checksum.final();
+        return res;
     }
 }

@@ -2,17 +2,17 @@
 #include <fstream>
 #include <iostream>
 
-bf::fileio::fileio()
+fileio::fileio() : filebuf{}
 {
 	std::cout << "Initializing fileio...\n";
 }
 
-bf::fileio::~fileio()
+fileio::~fileio()
 {
 	std::cout << "Cleaning up fileio...\n";
 }
 
-void bf::fileio::readFile(const char* const filename)
+void fileio::readFile(const char* const filename)
 {
 
 	std::cout << "Opening file " << filename << '\n';
@@ -35,7 +35,7 @@ void bf::fileio::readFile(const char* const filename)
 	infile.read(filebuf->data(), length);
 }
 
-std::vector<char>* const bf::fileio::getFileBuf()
+std::vector<char>* const fileio::getFileBuf()
 {
 	return filebuf;
 }

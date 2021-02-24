@@ -15,16 +15,16 @@ namespace btorunittests
 		
 		TEST_METHOD(BObject_BInt_Test)
 		{
-			be::BObject bint(12);
+			BObject bint(12);
 			const int64_t expected = 12;
 			Assert::AreEqual(*bint.getInt(), expected);
 		}
 
 		TEST_METHOD(BObject_BList_Length_Test)
 		{
-			be::BObject blist(be::BObject_t::BList);
-			be::BObject bint(12);
-			be::BObject bstr("Test");
+			BObject blist(BObject_t::BList);
+			BObject bint(12);
+			BObject bstr("Test");
 			blist.pushBack(&bint);
 			blist.pushBack(&bstr);
 			Assert::AreEqual(blist.getLength(), (unsigned int) 2);

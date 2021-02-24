@@ -7,8 +7,12 @@
 
 class BSock
 {
+private:
+	// create a socket to listen for client connections
+	SOCKET _socket = INVALID_SOCKET;
 public:
 	BSock();
+	// SOCKET getListenSocket() { return this->listenSocket; }	// Don't do this, this socket will contain all socket info
 };
 
 BSock::BSock()
@@ -31,9 +35,9 @@ BSock::BSock()
 	struct addrinfo* result = NULL, * ptr = NULL, hints;
 
 	ZeroMemory(&hints, sizeof(hints));
-	hints.ai_family = AF_INET;	//IPv4
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_protocol = IPPROTO_TCP;
+	hints.ai_family = AF_INET6;	//IPv6 (so create a DUAL-MODE socket?)	// AF_UNSPEC = address family unspecified
+	hints.ai_socktype = SOCK_STREAM;	// Reliable, two-way, connection-based byte streams (TCP)
+	hints.ai_protocol = IPPROTO_TCP;	// TCP protocol
 	hints.ai_flags = AI_PASSIVE;
 
 	// resolve the local address and port to be used by the server
@@ -45,8 +49,7 @@ BSock::BSock()
 		exit(EXIT_FAILURE);
 	}
 
-	// create a socket to listen for client connections
-	SOCKET listenSocket = INVALID_SOCKET;
+
 
 	/*
 	If the server application wants to listen on IPv6, then the address family needs to be set to AF_INET6 in the hints parameter. 
@@ -56,10 +59,11 @@ BSock::BSock()
 	Windows Vista and later offer the ability to create a single IPv6 socket that is put in dual stack mode to listen on both IPv6 and IPv4. 
 	For more information on this feature, see Dual-Stack Sockets. https://docs.microsoft.com/en-us/windows/win32/winsock/dual-stack-sockets
 	*/
-	listenSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+	_socket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+	// setsockopt(_socket, )
 
 	// check for errors to make sure we have a valid socket
-	if (listenSocket == INVALID_SOCKET)
+	if (_socket == INVALID_SOCKET)
 	{
 		std::cout << "Error at socket(): " << WSAGetLastError() << '\n';
 		freeaddrinfo(result);	// make result a private member
@@ -68,12 +72,12 @@ BSock::BSock()
 	}
 
 	// bind our socket, aka setup the TCP listening socket
-	iResult = bind(listenSocket, result->ai_addr, (int)result->ai_addrlen);
+	iResult = bind(_socket, result->ai_addr, (int)result->ai_addrlen);
 	if (iResult == SOCKET_ERROR)
 	{
 		std::cout << "bind failed with error: " << WSAGetLastError() << '\n';
 		freeaddrinfo(result);
-		closesocket(listenSocket);
+		closesocket(_socket);
 		WSACleanup();
 		exit(EXIT_FAILURE);
 	}
@@ -82,10 +86,10 @@ BSock::BSock()
 	freeaddrinfo(result);
 
 	// to listen on a socket:
-	if (listen(listenSocket, SOMAXCONN) == SOCKET_ERROR)
+	if (listen(_socket, SOMAXCONN) == SOCKET_ERROR)
 	{
 		std::cout << "Listen failed: " << WSAGetLastError() << '\n';
-		closesocket(listenSocket);
+		closesocket(_socket);
 		WSACleanup();
 		exit(EXIT_FAILURE);
 	}
@@ -97,11 +101,12 @@ BSock::BSock()
 	clientSocket = INVALID_SOCKET;
 
 	// accept!
-	clientSocket = accept(listenSocket, NULL, NULL);
+	clientSocket = accept(_socket, NULL, NULL);
+	// after we've connected we should get a handshake?
 	if (clientSocket == INVALID_SOCKET)
 	{
 		std::cout << "Accept failed: " << WSAGetLastError() << '\n';
-		closesocket(listenSocket);
+		closesocket(_socket);
 		WSACleanup();
 		exit(EXIT_FAILURE);
 	}

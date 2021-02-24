@@ -5,117 +5,115 @@
 #include <exception>
 #include <memory>
 
-namespace be
+
+struct BTypeException : public std::exception
 {
-	struct BTypeException : public std::exception
+	const char* what() const throw ()
 	{
-		const char* what() const throw ()
-		{
-			return "Incorrect type";
-		}
-	};
+		return "Incorrect type";
+	}
+};
 
-	struct BDictKeyException : public std::exception
+struct BDictKeyException : public std::exception
+{
+	const char* what() const throw ()
 	{
-		const char* what() const throw ()
-		{
-			return "Key not found";
-		}
-	};
+		return "Key not found";
+	}
+};
 
-	struct BParserException : public std::exception
+struct BParserException : public std::exception
+{
+private:
+	std::string errMsg;
+public:
+	BParserException(char c) : 
+		errMsg(std::string("Parser error: Unexpected symbol " + (isprint(c) ? c : '?'))) {}
+
+	const char* what() const throw()
 	{
-	private:
-		std::string errMsg;
-	public:
-		BParserException(char c) : 
-			errMsg(std::string("Parser error: Unexpected symbol " + (isprint(c) ? c : '?'))) {}
+		return errMsg.c_str();
+	}
+};
 
-		const char* what() const throw()
-		{
-			return errMsg.c_str();
-		}
-	};
+enum class BObject_t
+{
+	BString,
+	BInteger,
+	BList,
+	BDict,
+	BNull
+};
 
-	enum class BObject_t
-	{
-		BString,
-		BInteger,
-		BList,
-		BDict,
-		BNull
-	};
+class BObject
+{
+private:
+	BObject_t type;
+	std::string stringVal;
+	int64_t intVal = 0;
+	std::vector<BObject*> listVal;
+	std::map<std::string, BObject*> dictVal;
 
-	class BObject
-	{
-	private:
-		be::BObject_t type;
-		std::string stringVal;
-		int64_t intVal = 0;
-		std::vector<BObject*> listVal;
-		std::map<std::string, BObject*> dictVal;
+public:
+	BObject();
+	~BObject();
+	BObject(const BObject_t type);
+	BObject(const BObject& other);	// Copy constructor
+	BObject(int64_t);
+	BObject(std::string initString);
+	BObject(std::vector<BObject*>);
+	BObject(std::map<std::string, BObject*>);
+	BObject_t getType() const { return this->type; }
+	void setType(BObject_t type) { this->type = type;  }
+	const bool checkIfHasKey(std::string const searchKey) const;
+	const BObject* getByKey(std::string const) const;
+	void addKeyValue(const std::string key, BObject* val);
+	const int64_t* getInt() const;
+	const unsigned int getLength() const;
+	const std::string* getString() const;
+	const std::vector<BObject*>* getList() const;
+	const std::map<std::string, BObject*>* getDict() const;
+	void pushBack(BObject* obj);
+	// auto getValue() const;
+};
 
-	public:
-		BObject();
-		~BObject();
-		BObject(const BObject_t type);
-		BObject(const BObject& other);	// Copy constructor
-		BObject(int64_t);
-		BObject(std::string initString);
-		BObject(std::vector<BObject*>);
-		BObject(std::map<std::string, BObject*>);
-		BObject_t getType() const { return this->type; }
-		void setType(BObject_t type) { this->type = type;  }
-		const bool checkIfHasKey(std::string const searchKey) const;
-		const BObject* getByKey(std::string const) const;
-		void addKeyValue(const std::string key, BObject* val);
-		const int64_t* getInt() const;
-		const unsigned int getLength() const;
-		const std::string* getString() const;
-		const std::vector<BObject*>* getList() const;
-		const std::map<std::string, BObject*>* getDict() const;
-		void pushBack(BObject* obj);
-		// auto getValue() const;
-	};
+class BMemoryManager
+{
+private:
+	std::vector<BObject*> BObjects;
+public:
+	// will be responsible for managing all of the memory
+	BMemoryManager();
+	~BMemoryManager();
+	template <typename T> BObject* getNewBObject(T);
+};
 
-	class BMemoryManager
-	{
-	private:
-		std::vector<BObject*> BObjects;
-	public:
-		// will be responsible for managing all of the memory
-		BMemoryManager();
-		~BMemoryManager();
-		template <typename T> BObject* getNewBObject(T);
-	};
+class BParser
+{
+private:
+	unsigned int cursor;
+	BMemoryManager* _bMemoryManager;
+	const std::vector<char>* _parseBuf;
+	bool collectInfoDict = false;
+	long long int collectedLength = 0;
+	std::string collectedInfoDict;
+public:
+	// will be responsible for parsing the bencoded string
+	BParser();
+	~BParser();
+	char consumeChar();
+	char peekChar();
+	BObject* parseBencodedString(const std::vector<char>*, BMemoryManager*);
+	BObject* parseArbitrary();
+	BObject* parseDictionary();
+	BObject* parseString();
+	std::string extractString();
+	BObject* parseList();
+	BObject* parseInteger();
+	std::string getCollectedInfoDict();
+	long long int getCollectedLength();	// eventually move this to butils and make it find these
+};
 
-	class BParser
-	{
-	private:
-		unsigned int cursor;
-		BMemoryManager* _bMemoryManager;
-		const std::vector<char>* _parseBuf;
-		bool collectInfoDict = false;
-		long long int collectedLength = 0;
-		std::string collectedInfoDict;
-	public:
-		// will be responsible for parsing the bencoded string
-		BParser();
-		~BParser();
-		char consumeChar();
-		char peekChar();
-		BObject* parseBencodedString(const std::vector<char>*, BMemoryManager*);
-		BObject* parseArbitrary();
-		BObject* parseDictionary();
-		BObject* parseString();
-		std::string extractString();
-		BObject* parseList();
-		BObject* parseInteger();
-		std::string getCollectedInfoDict();
-		long long int getCollectedLength();	// eventually move this to butils and make it find these
-	};
+std::ostream& operator<<(std::ostream& os, const BObject& bo);
 
-	std::ostream& operator<<(std::ostream& os, const BObject& bo);
-
-	// TODO: Pretty print function with nice indentation
-}
+// TODO: Pretty print function with nice indentation
