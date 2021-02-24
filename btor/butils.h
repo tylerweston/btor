@@ -5,6 +5,8 @@
 
 // bitfield generation here?
 /*
+Bitfield is function of length of pieces in the info value.
+ 
 The bitfield message may only be sent immediately after the handshaking sequence is completed, 
 and before any other messages are sent. It is optional, and need not be sent if a client has no pieces.
 (Since it is optional, let's not worry too much about it for now! Just say we don't have any pieces!)

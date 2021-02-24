@@ -66,9 +66,13 @@ private:
 	bool peerChoking = true;		// when a peer is choking us, we don't send them messages and discard unanswered requests
 	bool peerInterested = false;
 	std::string _id;
-	std::array<uint8_t, 4> addr;
-	std::array<uint8_t, 2> port;
+	sockaddr_in peerAddress;		// hold the connection info for this peer
+	// socket? Is it one global socket? How does that work?
+	// each peer should keep track of it's own has bitfield
+	// connection state
+	// incomplete message data?
 public:
+	BPeer(std::string ipaddr, unsigned short port);
 	bool getAmChoking() { return this->amChoking; }
 	bool getAmInterested() { return this->amInterested; }
 	bool getPeerChoking() { return this->peerChoking; }
@@ -81,17 +85,6 @@ public:
 };
 
 // messages?
-
-struct handshake
-{
-	// <pstrlen><pstr><reserved><info_hash><peer_d>
-	// in version 1.0 of bittorrent protocol, pstrlen = 49, pstr = "BitTorrent protocol"
-	UINT8 pstrlen;			// string length of pstr as a single raw byte
-	std::string pstr;		// string identifier of protocol
-	UINT8 reserved[8]{ 0 };	// 8 reserved bytes, currently all 0
-	std::string info_hah[20];		// 20 byte hash of info-dict
-	std::string peer_id;	// out unique ID we sent to the server
-};
 
 struct have
 {
@@ -125,3 +118,5 @@ enum class messages
 	cancel = 8,				// cancel a block request we've made
 	port = 9				// only if DHT tracker is supported? Don't implement?
 };
+
+// we'll make each peer keep track of it's IP address and port?

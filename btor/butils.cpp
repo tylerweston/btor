@@ -5,23 +5,24 @@
 
 void getSHA1(Metainfo& metainfo)
 {
+	// get our SHA1 info hash as a vector of uint32
 	sha1::SHA1 checksum;
 	checksum.update(metainfo.infodict);
 	std::vector<uint32_t> res;
 	res = checksum.final();
-	std::cout << "sizeof res: " << res.size() << '\n';
+
+	// we'll store it in hex that we send to the announcer
 	std::ostringstream result;
 	for (size_t i = 0; i < res.size(); i++)
 	{
 		result << std::hex << std::setfill('0') << std::setw(8);
 		result << res[i];
 	}
-	std::cout << "Trying to build info_hash, got hex string: " << result.str() << '\n';
 	metainfo.info_hash_hex = result.str();
-	//metainfo.
-	// todo: info_hash_raw should be converted to an array of uint8_t now
-	//std::string hash = checksum.final();
-	//return hash;
+
+	// and also store as a vector of bytes that we'll use as our tcp handshake
+	std::vector<uint8_t> converted((std::uint8_t*)&res, (std::uint8_t*)&(res)+sizeof(std::uint32_t) * 5);
+	metainfo.info_hash_raw = converted;
 }
 
 std::string generateId()
@@ -51,6 +52,6 @@ std::string urlEncode(std::string inputString)
 
 void fillMetainfo(Metainfo& metainfo, BParser& bParser)
 {
-	// fill in a given metainfo struct with information from the bParser
+	// fill in a given metainfo struct with information from the bParser?
 
 }

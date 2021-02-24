@@ -105,6 +105,9 @@ int main()
 	std::cout << "Announcer: " << metainfo.announce << '\n';
 	std::string address = metainfo.announce;
 
+	// We need to initialize our socket up here so we know what port we are listening on and we can send
+	// it to the announcer!
+
 	// send a start request
 	auto builtAddress = buildAnnounceParameters(metainfo, state.uniqueId, "started");
 	auto serverAddr = getServerAddress(metainfo.announce);
@@ -137,9 +140,6 @@ int main()
 		exit(EXIT_FAILURE);
 	}
 
-
-	BObject* serverResponse;
-
 	int64_t complete = *serverResponseParser->getByKey("complete")->getInt();
 	int64_t incomplete = *serverResponseParser->getByKey("incomplete")->getInt();
 	int64_t interval = *serverResponseParser->getByKey("interval")->getInt();
@@ -147,10 +147,12 @@ int main()
 	std::cout << "# of leechers: " << incomplete << '\n';
 	std::cout << "interval: " << interval << '\n';
 
-
 	// In peers binary model, this will be a string, in dictionary mode this will be a dictionary
 	BObject_t dictType = serverResponseParser->getByKey("peers")->getType();
 	std::vector<std::string> peerList;
+
+	std::vector<BObject*> peers;
+	std::vector<BPeer> bpeers;
 
 	if (dictType == BObject_t::BString)	// binary packed peers
 	{
@@ -194,15 +196,20 @@ int main()
 			ip: peer's IP address either IPv6 (hexed) or IPv4 (dotted quad) or DNS name (string)
 			port: peer's port number (integer)
 		*/
-		std::vector<BObject*> peers = *serverResponseParser->getByKey("peers")->getList();
+		peers = *serverResponseParser->getByKey("peers")->getList();
 		for (auto& p : peers)
 		{
 			std::string peerIP = *p->getByKey("ip")->getString();
 			int port = *p->getByKey("port")->getInt();
 			peerList.push_back(peerIP + ":" + std::to_string(port));
+			bpeers.push_back(BPeer(peerIP, port));
 		}
 	}
 
+	// once we get here, we'll have a vector of BPeer objects that will hold their own
+	// addresses
+
+	/*
 	std::cout << "Peer addresses:\n";
 	bool first = true;
 	for (auto& peer : peerList)
@@ -213,6 +220,12 @@ int main()
 		std::cout << peer;
 	}
 	std::cout << '\n';
+	*/
+
+	std::string shake = BPeer::getHandshake(&state);	// can we use a string here?
+	// or should we use uint8_t or something?
+	assert(shake.size() == 68);
+	std::cout << "Generated handshake...\n";
 
 	// main loop
 	std::cout << "In main loop (ctrl-c to break)\n";
@@ -222,16 +235,20 @@ int main()
 	// one torrent at a time, this isn't something for us to worry about!
 	
 	// We send out handshakes to all the peers first and then wait to hear back from them? 
-		
-	std::string shake = BPeer::getHandshake(&state);
-	//assert(shake.size() == 68);
-	std::cout << "String length: " << shake.size() << '\n';
-	std::cout << "Our handshake: " << shake;
-	// don't choke and unchoke quickly. 
 	while (exitRequested != 1)
 	{
 		// here is where we try to meet peers. We'll send them a handshake first.
 		// this will happen in threads
+
+		// connect to a peer discovered by the announcer
+		// create a socket for the peer
+		// set socket to non-blocking mode
+		// invoke connect
+		// if we connect, send our handshake
+		// messages that can be at a socket:
+		// - incoming handshake response (if we sent a handshake)
+		// - incoming handshake request? what is this?
+		// - any other of the possible messages
 	}
 	// clean up threads?
 

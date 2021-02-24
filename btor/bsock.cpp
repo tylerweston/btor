@@ -1,6 +1,7 @@
 #include <WinSock2.h>
 #include <WS2tcpip.h>
 #include <iostream>
+#include <process.h>
 
 // todo: need to get this from somewhere?
 #define DEFAULT_PORT "6886"
@@ -10,6 +11,7 @@ class BSock
 private:
 	// create a socket to listen for client connections
 	SOCKET _socket = INVALID_SOCKET;
+	// unsigned __stdcall ClientSession(void* data);
 public:
 	BSock();
 	// SOCKET getListenSocket() { return this->listenSocket; }	// Don't do this, this socket will contain all socket info
@@ -100,16 +102,24 @@ BSock::BSock()
 
 	clientSocket = INVALID_SOCKET;
 
-	// accept!
-	clientSocket = accept(_socket, NULL, NULL);
-	// after we've connected we should get a handshake?
-	if (clientSocket == INVALID_SOCKET)
-	{
-		std::cout << "Accept failed: " << WSAGetLastError() << '\n';
-		closesocket(_socket);
-		WSACleanup();
-		exit(EXIT_FAILURE);
+	//// accept!
+	//clientSocket = accept(_socket, NULL, NULL);
+	//// after we've connected we should get a handshake?
+	//if (clientSocket == INVALID_SOCKET)
+	//{
+	//	std::cout << "Accept failed: " << WSAGetLastError() << '\n';
+	//	closesocket(_socket);
+	//	WSACleanup();
+	//	exit(EXIT_FAILURE);
+	//}
+	// https://stackoverflow.com/questions/15185380/tcp-winsock-accept-multiple-connections-clients
+	while ((clientSocket = accept(_socket, NULL, NULL))) {
+		// Create a new thread for the accepted client (also pass the accepted client socket).
+		unsigned threadID;
+		// hmm vvv doesn't work.
+		// HANDLE hThread = (HANDLE)_beginthreadex(NULL, 0, &ClientSession, (void*)clientSocket, 0, &threadID);
 	}
+
 	// look at: https://docs.microsoft.com/en-us/windows/win32/winsock/getting-started-with-winsock <- advanced winsock samples
 	// for ideas of how to make this multi-threaded. For now, once we accept a connection, just start using it!
 	// eventually though, a new connection will spawn a new thread to handle that connection?
@@ -172,7 +182,10 @@ BSock::BSock()
 	
 
 	// next step for clients: https://docs.microsoft.com/en-us/windows/win32/winsock/creating-a-socket-for-the-client
-
-
-
 }
+
+//unsigned __stdcall ClientSession(void* data)
+//{
+//	SOCKET client_socket = (SOCKET)data;
+//	// Process the client.
+//}
