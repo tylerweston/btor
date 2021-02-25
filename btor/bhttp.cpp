@@ -32,11 +32,9 @@ std::string makeGetRequest(const std::string address, const std::string path)
 
 std::string buildAnnounceParameters(Metainfo& metainfo, std::string peer_id, std::string bEvent)
 {
-    // TODO: This SHA calculation should happen somewhere else
-    // TODO: We can use the openssl SHA1 thing so we don't need an extra library?
+    // TODO: We only need to build this once, then append different events to the end of it
     const std::string hash = metainfo.info_hash_hex;
     const std::string encodedHash = urlEncode(hash);
-    std::cout << "Encoded hash: " << encodedHash << '\n';
     // build our announce path
     return "?info_hash=" + encodedHash + "&peer_id=" + peer_id +
         "&uploaded=0&downloaded=0&left=" + std::to_string(metainfo.totallength) + "&event=" + bEvent + "&port=6886";

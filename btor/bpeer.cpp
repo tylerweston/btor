@@ -7,7 +7,6 @@
 // don't choke and unchoke quickly. 
 BPeer::BPeer(std::string ipaddr, unsigned short port)
 {
-	//this->peerAddress.sin_addr.s_addr = inet_addr(ipaddr.c_str());
 	InetPton(AF_INET, (PCWSTR)ipaddr.c_str(), &this->peerAddress.sin_addr.s_addr);
 	this->peerAddress.sin_port = htons(port);
 }
@@ -42,16 +41,3 @@ std::string BPeer::getHandshake(BState* state)
 	shake += state->uniqueId;
 	return shake;
 }
-
-//// messages?
-//
-//struct handshake
-//{
-//	// <pstrlen><pstr><reserved><info_hash><peer_d>
-//	// in version 1.0 of bittorrent protocol, pstrlen = 49, pstr = "BitTorrent protocol"
-//	UINT8 pstrlen;			// string length of pstr as a single raw byte
-//	std::string pstr;		// string identifier of protocol
-//	UINT8 reserved[8]{ 0 };	// 8 reserved bytes, currently all 0
-//	std::string info_hah[20];		// 20 byte hash of info-dict
-//	std::string peer_id;	// out unique ID we sent to the server
-//};

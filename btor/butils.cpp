@@ -1,6 +1,15 @@
 #include "butils.h"
 #include "btor.h"
 #include "sha1.hpp"
+#include <math.h>
+
+unsigned long long getBitfieldSize(Metainfo& metainfo)
+{
+	// Calculate size of a bitfield based on metainfo we've collected
+	unsigned long long number_of_pieces = ceil(metainfo.totallength / metainfo.piecelength);
+	unsigned long long size_of_bitfield = ceil(number_of_pieces / 8);
+	return size_of_bitfield;
+}
 
 
 void getSHA1(Metainfo& metainfo)
@@ -39,6 +48,8 @@ std::string generateId()
 
 std::string urlEncode(std::string inputString)
 {
+	// urlEncode a string, since our string is already hex, we just
+	// have to toss a % in before every byte (2 nibbles)
 	std::string encodedString;
 	int unsigned i = 0;
 	for (char ch : inputString)

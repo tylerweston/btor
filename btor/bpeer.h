@@ -107,10 +107,10 @@ enum class messages
 {
 	handshake = -2,			// say hello to a peer
 	keepAlive = -1,			// don't get disconnected
-	choke = 0,				// 
-	unchoke = 1,
-	interested = 2,
-	notInterested = 3,
+	choke = 0,				// no payload
+	unchoke = 1,			// no payload
+	interested = 2,			// no payload
+	notInterested = 3,		// no payload
 	have = 4,				// we just got and verified a new piece
 	bitfield = 5,			// which pieces we already have available
 	request = 6,			// we're looking for a piece!
@@ -119,4 +119,22 @@ enum class messages
 	port = 9				// only if DHT tracker is supported? Don't implement?
 };
 
-// we'll make each peer keep track of it's IP address and port?
+/* REQUEST IDEAS:
+Strict priortity:
+once a single sub-piece has been requested, the remaining subpieces from that particular
+block are requested before subpieces from any other block.
+this meanss we get full pieces as quickly as possible.
+
+Rarest first:
+Want to get the pieces that fewest of our peers have FIRST. 
+
+Random First Piece:
+When we're starting, download a random piece until we have ONE full piece, then change to rarest first.
+
+Endgame mode:
+Once all sub-pieces which you don't have are actvely being requested, send requests for ALL sub-pieces
+to ALL peers. Send cancels for sub-pieces which arrive so we don't download redundant data.
+
+
+*/
+

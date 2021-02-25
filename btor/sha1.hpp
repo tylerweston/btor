@@ -18,6 +18,9 @@
         -- Eugene Hopkinson <slowriot at voxelstorm dot com>
     Header-only library
         -- Zlatko Michailov <zlatko@michailov.org>
+
+    Edited by
+        -- Tyler Weston <tylerjohnweston @t gmail d0t com>
 */
 
 #include <cstdint>

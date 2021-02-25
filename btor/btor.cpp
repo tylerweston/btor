@@ -23,10 +23,6 @@ namespace
 	int exitRequested = 0;
 }
 
-#ifdef _WIN32
-// Move this somewhere!
-// todo: only use this is we're on windows, otherwise use a regular
-// signal?
 BOOL WINAPI CtrlHandler(DWORD fdwCtrlType)
 {
 	if (fdwCtrlType == CTRL_C_EVENT)
@@ -37,34 +33,27 @@ BOOL WINAPI CtrlHandler(DWORD fdwCtrlType)
 	}
 	return false;
 }
-#endif
+
 // otherwise, use a regular ol' signal handler?
 
 int main()
 {
-	BState state;
+	// Initialization
 
-#ifdef _WIN32
+	// Objects
+	BState state;
+	BMemoryManager bMemoryManager;
+	BParser bParser;
+	fileio fileManager;
+
 	if (!SetConsoleCtrlHandler(CtrlHandler, TRUE))
 	{
 		std::cout << "Cannot install signal handler!\n";
 		exit(EXIT_FAILURE);
 	}
-#endif
-
-	std::cout << "btor torrent client\n2021 - Tyler Weston\n";
-	// process command line arguments
-	// at the bare minimum should take in a .torrent file
-	//const char* torrentFilename = "mice_and_men.torrent";
-	const char* torrentFilename = "ubuntu2010.torrent";
-	state.filename = torrentFilename;
-	
-	// where should we put this?
-	// might be better just to add some defined conditional compilation stuff since not a lot
-	// of computers really change their endianness.
-	bool bigEndian;
 
 	// detect if we are big-endian or not
+	// todo: will we need to do this or always just use ntohl or whatnot?
 	std::cout << "Detecting endianness: ";
 	if constexpr (std::endian::native == std::endian::big)
 	{
@@ -77,25 +66,56 @@ int main()
 		state.bigEndian = false;
 	}
 
+	// TODO: Process command line args, take in at least a torrent
+	state.filename = "ubuntu2010.torrent";		//"mice_and_men.torrent";
+
+
 	// we use ONE unique id per session, so let's generate it now
-	//std::string uniqueId =
 	state.uniqueId = generateId();
 
-	fileio fileManager;
-	fileManager.readFile(torrentFilename);
+	std::cout << "\n";
+	std::cout << "- - - - - - - - - -\n";
+	std::cout << "btor torrent client\n2021 - Tyler Weston\n";
+	std::cout << "- - - - - - - - - -\n\n";
+
+
+	fileManager.readFile(state.filename);
+
+
 
 	// now that we have the torrent file loaded in memory, let's parse it
-	BMemoryManager bMemoryManager;
-	BParser bParser;
 	BObject* root = bParser.parseBencodedString(fileManager.getFileBuf(), &bMemoryManager);
 		
 	Metainfo metainfo;
 	const std::string input = bParser.getCollectedInfoDict();
 	metainfo.infodict = bParser.getCollectedInfoDict();
 	metainfo.totallength = bParser.getCollectedLength();
+	metainfo.piecelength = *root->getByKey("info")->getByKey("piece length")->getInt();
 	metainfo.announce = *root->getByKey("announce")->getString();
 	getSHA1(metainfo);	// this will fill our metainfo dict with the info_hash_hex
 	state.metainfo = &metainfo;
+
+	// check if we alread have an existing bitfield (ie, we are resuming this file)
+	std::string bitfield_file_name = state.filename + "bf";
+	if (fileManager.doesBitfieldFileExist(bitfield_file_name))
+	{
+		// read out bitfield file here
+		std::cout << "Bitfield file exists, reading it... ";
+		state.bitfield = fileManager.readBitfield(bitfield_file_name);
+		std::cout << "done\n";
+	}
+	else
+	{
+		// make a new empty bitfield file
+		std::cout << "Can't find bitfield file, creating it... ";
+		unsigned long long bitfield_size = getBitfieldSize(metainfo);
+		std::string bitfield_file_name = state.filename + "bf";
+		fileManager.createEmptyFile(bitfield_file_name, bitfield_size);
+		std::cout << "Created file " << bitfield_file_name << " with size " << bitfield_size << " bytes\n";
+		// now read bitfield into out state struct
+		state.bitfield = fileManager.readBitfield(bitfield_file_name);
+	}
+	// OK, by the time we get here, we have our bitfield loaded into our struct
 
 	// events
 	// must send started in first request
@@ -149,7 +169,6 @@ int main()
 
 	// In peers binary model, this will be a string, in dictionary mode this will be a dictionary
 	BObject_t dictType = serverResponseParser->getByKey("peers")->getType();
-	std::vector<std::string> peerList;
 
 	std::vector<BObject*> peers;
 	std::vector<BPeer> bpeers;
@@ -201,7 +220,6 @@ int main()
 		{
 			std::string peerIP = *p->getByKey("ip")->getString();
 			int port = *p->getByKey("port")->getInt();
-			peerList.push_back(peerIP + ":" + std::to_string(port));
 			bpeers.push_back(BPeer(peerIP, port));
 		}
 	}
