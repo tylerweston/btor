@@ -2,23 +2,16 @@
 #include <WS2tcpip.h>
 #include <iostream>
 #include <process.h>
+#include "bsock.h"
 
-// todo: need to get this from somewhere?
-#define DEFAULT_PORT "6886"
-
-class BSock
+BSock::~BSock()
 {
-private:
-	// create a socket to listen for client connections
-	SOCKET _socket = INVALID_SOCKET;
-	// unsigned __stdcall ClientSession(void* data);
-public:
-	BSock();
-	// SOCKET getListenSocket() { return this->listenSocket; }	// Don't do this, this socket will contain all socket info
-};
+	std::cout << "Closing TCP socket...";
+}
 
 BSock::BSock()
 {
+	std::cout << "Opening TCP socket...";
 	// so far this is all just based on the microsoft tutorials to get it up and running
 	WSADATA wsaData;
 
@@ -37,21 +30,25 @@ BSock::BSock()
 	struct addrinfo* result = NULL, * ptr = NULL, hints;
 
 	ZeroMemory(&hints, sizeof(hints));
-	hints.ai_family = AF_INET6;	//IPv6 (so create a DUAL-MODE socket?)	// AF_UNSPEC = address family unspecified
+	hints.ai_family = AF_INET;	//just try inet for now	// AF_UNSPEC = address family unspecified
 	hints.ai_socktype = SOCK_STREAM;	// Reliable, two-way, connection-based byte streams (TCP)
 	hints.ai_protocol = IPPROTO_TCP;	// TCP protocol
 	hints.ai_flags = AI_PASSIVE;
 
 	// resolve the local address and port to be used by the server
-	iResult = getaddrinfo(NULL, DEFAULT_PORT, &hints, &result);
+	iResult = getaddrinfo(NULL, DEFAULT_PORT, &hints, &result);	// NULL = resolve localhost?
 	if (iResult != 0)
 	{
 		std::cout << "getaddrinfo failed: " << iResult << '\n';
 		WSACleanup();
 		exit(EXIT_FAILURE);
 	}
+	else
+	{
+		std::cout << "Trying to connect on " << result->ai_addr << '\n';
+	}
 
-
+	return;
 
 	/*
 	If the server application wants to listen on IPv6, then the address family needs to be set to AF_INET6 in the hints parameter. 
@@ -167,6 +164,8 @@ BSock::BSock()
 		}
 	} while (iResult > 0);
 
+cleanup_and_end:
+	// This will happen in an individual peer block
 	// shutdown the sending side of the socket (ie, the other side)
 	iResult = shutdown(clientSocket, SD_SEND);
 	if (iResult == SOCKET_ERROR)
@@ -184,8 +183,18 @@ BSock::BSock()
 	// next step for clients: https://docs.microsoft.com/en-us/windows/win32/winsock/creating-a-socket-for-the-client
 }
 
-//unsigned __stdcall ClientSession(void* data)
-//{
-//	SOCKET client_socket = (SOCKET)data;
-//	// Process the client.
-//}
+void BSock::MakeConnection(BPeer& peer)
+{
+	if (_socket == INVALID_SOCKET)
+	{
+		std::cout << "Socket is invalid or unitialized!\n";
+		return;
+	}
+	if (connect(_socket, (sockaddr*)peer.getPeerAddress(), sizeof(peer.getPeerAddress()) == SOCKET_ERROR))
+	{
+		std::cout << "Failed to connect to peer: " << WSAGetLastError() << '\n';
+		return;
+	}
+	// if we get here, we've made a connection to the peer?
+}
+

@@ -49,18 +49,32 @@ bool fileio::doesBitfieldFileExist(const std::string filename)
 	return std::filesystem::exists(filename);
 }
 
-std::vector<uint8_t> fileio::readBitfield(const std::string filename)
+//std::vector<uint8_t> fileio::readBitfield(const std::string filename)
+//{
+//	// We want to read in the bitfield from the file as unsigned chars
+//	// basically? 
+//	return {};
+//}
+
+std::vector<uint8_t> fileio::readBitfield(const std::string file_path)
 {
-	// We want to read in the bitfield from the file as unsigned chars
-	// basically? 
-	return {};
+	std::ifstream instream(file_path, std::ios::in | std::ios::binary);
+	std::vector<uint8_t> data((std::istreambuf_iterator<char>(instream)), std::istreambuf_iterator<char>());
+	std::cout << "In readBitfield size of data is " << data.size() << '\n';
+	return data;
 }
 
-void fileio::writeBitfield(const std::string filename, BState& state)
+void fileio::writeBitfield(const std::string filename, const BState& state)
 {
 	// We want to write out our bitfield to our saved file so we can 
 	// resume our download later!
 	// We'll call this when we're finished up
+	std::ofstream outstream(filename, std::ios::out | std::ios::binary);
+	size_t bytes_to_write = state.bitfield.size();
+	std::vector<uint8_t> bitfield_data = state.bitfield;
+	if (bitfield_data.size() == 0)
+		return;	// nothing to write
+	outstream.write(reinterpret_cast<char*>(&bitfield_data[0]), bytes_to_write);
 }
 
 std::vector<char>* const fileio::getFileBuf()	// let's make this not a char, but uint8_t?

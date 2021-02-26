@@ -1,7 +1,9 @@
 #include "pch.h"
 #include "CppUnitTest.h"
 #include "CppUnitTestAssert.h"
+#include <vector>
 #include "../btor/bencode.h"
+#include "../btor/butils.h"
 
 // when you add more tests, remember to add the .obj file they depend on to the additional
 // dependencies list under linker > input > additional dependencies
@@ -9,6 +11,62 @@ using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace btorunittests
 {
+	TEST_CLASS(UtilsMiscUnittests)
+	{
+	public:
+		TEST_METHOD(Test_UrlEncode)
+		{
+			std::string to_encode = "BEEFED";
+			std::string expected = "%BE%EF%ED";
+			std::string res = urlEncode(to_encode);
+			Assert::AreEqual(res, expected);
+		}
+		//urlEncode
+		TEST_METHOD(Test_Generate_id)
+		{
+			std::string id = generateId();
+			Assert::IsTrue(id.substr(0, 8) == "-btor01-");
+			Assert::AreEqual(20, (int)id.size());
+		}
+	};
+
+	TEST_CLASS(BitfieldUnittests)
+	{
+	public:
+		TEST_METHOD(Set_and_get_Bit_In_Bitfield_First_Byte)
+		{
+			std::vector<uint8_t> bfield = { 0,0,0,0 };
+			setBitInBitfield(bfield, 0);
+			Assert::IsTrue(isBitInBitfieldSet(bfield, 0));
+			Assert::IsFalse(isBitInBitfieldSet(bfield, 1));
+		}
+
+		TEST_METHOD(Set_and_get_Bit_In_Bitfield_Second_Byte)
+		{
+			std::vector<uint8_t> bfield = { 0,0,0,0 };
+			setBitInBitfield(bfield, 8);
+			Assert::IsTrue(isBitInBitfieldSet(bfield, 8));
+			Assert::IsFalse(isBitInBitfieldSet(bfield, 9));
+		}
+
+		TEST_METHOD(Check_Set_First_Bit)
+		{
+			std::vector<uint8_t> bfield = { 0, 0, 0, 0 };
+			setBitInBitfield(bfield, 0);
+			uint8_t byte1 = bfield[0];
+			Assert::AreEqual((int)byte1, 0x80);
+		}
+
+		TEST_METHOD(Check_Set_Last_Bit)
+		{
+			std::vector<uint8_t> bfield = { 0, 0, 0 };
+			setBitInBitfield(bfield, 23);
+			uint8_t byte3 = bfield[2];
+			Assert::AreEqual((int)byte3, 0x01);
+		}
+	};
+
+
 	TEST_CLASS(BObjectsUnittests)
 	{
 	public:

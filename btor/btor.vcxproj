@@ -163,6 +163,7 @@
     <ClInclude Include="bfileio.h" />
     <ClInclude Include="bhttp.h" />
     <ClInclude Include="bpeer.h" />
+    <ClInclude Include="bsock.h" />
     <ClInclude Include="btor.h" />
     <ClInclude Include="butils.h" />
     <ClInclude Include="HTTPRequest.hpp" />

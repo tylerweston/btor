@@ -12,21 +12,6 @@
 // The peer wire protocol consists of an initial handshake. After that, peers communicate via an exchange of 
 // length-prefixed messages. The length-prefix is an integer as described above.
 
-//
-//Handshake
-//The handshake is a required messageand must be the first message transmitted by the client.It is(49 + len(pstr)) bytes long.
-//
-//handshake: <pstrlen><pstr><reserved><info_hash><peer_id>
-//
-//pstrlen : string length of <pstr>, as a single raw byte
-//pstr : string identifier of the protocol
-//reserved : eight(8) reserved bytes.All current implementations use all zeroes.Each bit in these bytes can be used to 
-//change the behavior of the protocol.An email from Bram suggests that trailing bits should be used first, so that leading bits 
-//may be used to change the meaning of trailing bits.
-//info_hash : 20 - byte SHA1 hash of the info key in the metainfo file.This is the same info_hash that is transmitted in tracker requests.
-//peer_id : 20 - byte string used as a unique ID for the client.This is usually the same peer_id that is transmitted in tracker 
-//requests(but not always e.g.an anonymity option in Azureus).
-
 // so we will have a vector of peers?
 // each will run in it's own thread?
 // but only one can write to our files at the same time?
@@ -73,6 +58,7 @@ private:
 	// connection state
 	// incomplete message data?
 public:
+	sockaddr_in* getPeerAddress() { return &this->peerAddress; }
 	BPeer(std::string ipaddr, unsigned short port);
 	bool getAmChoking() { return this->amChoking; }
 	bool getAmInterested() { return this->amInterested; }
@@ -90,16 +76,6 @@ public:
 struct have
 {
 	UINT32 piece_index;		// 0 based index of piece we've received and verified via hash, IS THIS 32-bits?
-};
-
-struct bitfield
-{
-	/*
-	The right length is equal to payload_piece_count + (8 - payload_piece_count % 8). 
-	Each piece is encoded as one bit, so we have 8 piece per byte. In the case of 1592 pieces, 
-	there should be 199 bytes, and no spare bits. In the case of 1595 pieces, there should be 
-	200 bytes, and 5 spare bits (200 x 8 -1595 ). Of course this is only for X (from len=0001+X ).
-	*/
 };
 
 // is this an ok way to do it?

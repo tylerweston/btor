@@ -9,6 +9,8 @@
 #include "bhttp.h"
 #include "butils.h"
 #include "bpeer.h"
+#include "bsock.h"
+
 #include <iostream>
 #include <stdlib.h>
 #include <bit>
@@ -51,6 +53,8 @@ int main()
 		std::cout << "Cannot install signal handler!\n";
 		exit(EXIT_FAILURE);
 	}
+
+	ShowConsoleCursor(false);
 
 	// detect if we are big-endian or not
 	// todo: will we need to do this or always just use ntohl or whatnot?
@@ -102,7 +106,7 @@ int main()
 		// read out bitfield file here
 		std::cout << "Bitfield file exists, reading it... ";
 		state.bitfield = fileManager.readBitfield(bitfield_file_name);
-		std::cout << "done\n";
+		std::cout << "done, read bitfield is " << state.bitfield.size() * 8 << " bits\n";
 	}
 	else
 	{
@@ -243,8 +247,12 @@ int main()
 	
 	// We send out handshakes to all the peers first and then wait to hear back from them? 
 	float percentage_done = 0.0;
-	ShowConsoleCursor(false);
-	std::cout << "[..........]";
+
+
+	BSock bsock;
+
+	std::cout << "[....................]";
+	
 	while (exitRequested != 1)
 	{
 		// here is where we try to meet peers. We'll send them a handshake first.
@@ -281,8 +289,13 @@ int main()
 	builtAddress = buildAnnounceParameters(metainfo, state.unique_id, "stopped");
 	std::cout << "Sending stop request... ";
 	response = makeGetRequest(serverAddr, "/" + announcePath + builtAddress);	// problem here sometimes, is the request response too big or something? maybe it isn't completed?
-	// TODO: check response
-	std::cout << " done\n";
+	// TODO: check response?
+	std::cout << "done\n";
+
+	// TODO: Check if we actually need to write out the bitfield or not.
+	std::cout << "Writing updated bitfield... ";
+	fileManager.writeBitfield(bitfield_file_name, state);
+	std::cout << "done\n";
 
 	exit(EXIT_SUCCESS);
 }

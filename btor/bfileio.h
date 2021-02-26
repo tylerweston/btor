@@ -19,7 +19,7 @@ class fileio
 		bool doesBitfieldFileExist(const std::string filename);
 
 		std::vector<uint8_t> readBitfield(const std::string filename);
-		void writeBitfield(const std::string filename, BState& state);
+		void writeBitfield(const std::string filename, const BState& state);
 
 		void createEmptyFile(const std::string filename, unsigned long long filesize);
 		void createDirectory(const std::string dir);

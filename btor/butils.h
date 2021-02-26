@@ -15,8 +15,8 @@ void fillMetainfo(Metainfo& metainfo, BParser& bParser);
 
 // Bitfield editing stuff
 unsigned long long getBitfieldSize(Metainfo& metainfo);
-void setBitInBitfield(BState& state, int bit_to_set);
-bool isBitInBitfieldSet(BState& state, int bit_to_check);
+void setBitInBitfield(std::vector<uint8_t>& bitfield, const int bit_to_set);
+bool isBitInBitfieldSet(const std::vector<uint8_t>& bitfield, int bit_to_check);
 
 // Console drawing stuff, maybe make this curses stuff?
 void show_status(float percentage);

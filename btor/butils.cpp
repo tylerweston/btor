@@ -3,7 +3,8 @@
 #include "sha1.hpp"
 #include <math.h>
 
-void setBitInBitfield(BState& state, int bit_to_set)
+
+void setBitInBitfield(std::vector<uint8_t>& bitfield, const int bit_to_set)
 {
 	// This will set a value to 1. (We don't need to clear bits?)
 	// or if we do, just do it in another function.
@@ -17,15 +18,15 @@ void setBitInBitfield(BState& state, int bit_to_set)
 	int target_byte = bit_to_set / 8;
 	int bit_offset = bit_to_set % 8;
 	// so now we'll grab the n-th byte
-	state.bitfield[target_byte] |= (0x80 >> bit_offset);
+	bitfield[target_byte] |= (0x80 >> bit_offset);
 }
 
-bool isBitInBitfieldSet(BState& state, int bit_to_check)
+bool isBitInBitfieldSet(const std::vector<uint8_t>& bitfield, const int bit_to_check)
 {
 	// check if a bit in the bitfield is set
 	int target_byte = bit_to_check / 8;
 	int bit_offset = bit_to_check % 8;
-	return state.bitfield[target_byte] & (0x80 >> bit_offset);
+	return bitfield[target_byte] & (0x80 >> bit_offset);
 }
 
 unsigned long long getBitfieldSize(Metainfo& metainfo)
@@ -106,7 +107,7 @@ void ShowConsoleCursor(bool showFlag)
 void show_status(float percentage)
 {
 	// erase last status bar
-	std::string backspaces(12, '\b');
+	std::string backspaces(22, '\b');
 	std::cout << backspaces;
 	int tens = (int)(percentage * 10);
 	int ones = (int)(100 * percentage) % 10;
@@ -114,11 +115,21 @@ void show_status(float percentage)
 	for (int i = 0; i < 10; ++i)
 	{
 		if (i == tens)
-			middle_bit += std::to_string(ones);
+			if (ones <= 4)
+			{
+				middle_bit += std::to_string(ones) + ".";
+			}
+			else
+			{
+				middle_bit += (char)254u + std::to_string(ones);
+			}
 		else if (i < tens)
+		{
 			middle_bit += (char)254u;
+			middle_bit += (char)254u;
+		}
 		else
-			middle_bit += ".";
+			middle_bit += "..";
 	}
 	std::cout << "[" << middle_bit << "]";
 }
