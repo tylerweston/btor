@@ -3,10 +3,35 @@
 #include "sha1.hpp"
 #include <math.h>
 
+void setBitInBitfield(BState& state, int bit_to_set)
+{
+	// This will set a value to 1. (We don't need to clear bits?)
+	// or if we do, just do it in another function.
+	// figure out which BYTE and BIT we're in.
+	// 0 = byte 0, bit 8
+	// we're storing bits in an ARRAY of UINT8_T
+	// so
+
+	// 0123 4567  8911 1111  1111 2222 ...
+	//              01 2345  6789 0123
+	int target_byte = bit_to_set / 8;
+	int bit_offset = bit_to_set % 8;
+	// so now we'll grab the n-th byte
+	state.bitfield[target_byte] |= (0x80 >> bit_offset);
+}
+
+bool isBitInBitfieldSet(BState& state, int bit_to_check)
+{
+	// check if a bit in the bitfield is set
+	int target_byte = bit_to_check / 8;
+	int bit_offset = bit_to_check % 8;
+	return state.bitfield[target_byte] & (0x80 >> bit_offset);
+}
+
 unsigned long long getBitfieldSize(Metainfo& metainfo)
 {
 	// Calculate size of a bitfield based on metainfo we've collected
-	unsigned long long number_of_pieces = ceil(metainfo.totallength / metainfo.piecelength);
+	unsigned long long number_of_pieces = ceil(metainfo.total_length / metainfo.piece_length);
 	unsigned long long size_of_bitfield = ceil(number_of_pieces / 8);
 	return size_of_bitfield;
 }
@@ -65,4 +90,35 @@ void fillMetainfo(Metainfo& metainfo, BParser& bParser)
 {
 	// fill in a given metainfo struct with information from the bParser?
 
+}
+
+void ShowConsoleCursor(bool showFlag)
+{
+	HANDLE out = GetStdHandle(STD_OUTPUT_HANDLE);
+
+	CONSOLE_CURSOR_INFO     cursorInfo;
+
+	GetConsoleCursorInfo(out, &cursorInfo);
+	cursorInfo.bVisible = showFlag; // set the cursor visibility
+	SetConsoleCursorInfo(out, &cursorInfo);
+}
+
+void show_status(float percentage)
+{
+	// erase last status bar
+	std::string backspaces(12, '\b');
+	std::cout << backspaces;
+	int tens = (int)(percentage * 10);
+	int ones = (int)(100 * percentage) % 10;
+	std::string middle_bit{ "" };
+	for (int i = 0; i < 10; ++i)
+	{
+		if (i == tens)
+			middle_bit += std::to_string(ones);
+		else if (i < tens)
+			middle_bit += (char)254u;
+		else
+			middle_bit += ".";
+	}
+	std::cout << "[" << middle_bit << "]";
 }

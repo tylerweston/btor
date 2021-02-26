@@ -51,15 +51,19 @@ bool fileio::doesBitfieldFileExist(const std::string filename)
 
 std::vector<uint8_t> fileio::readBitfield(const std::string filename)
 {
+	// We want to read in the bitfield from the file as unsigned chars
+	// basically? 
 	return {};
 }
 
 void fileio::writeBitfield(const std::string filename, BState& state)
 {
-
+	// We want to write out our bitfield to our saved file so we can 
+	// resume our download later!
+	// We'll call this when we're finished up
 }
 
-std::vector<char>* const fileio::getFileBuf()	// let's make this not a char, but uint8_t
+std::vector<char>* const fileio::getFileBuf()	// let's make this not a char, but uint8_t?
 {
 	return filebuf;
 }
@@ -74,18 +78,24 @@ void writeFile(const std::string filename, std::vector<uint8_t> data_to_write)
 
 void fileio::createEmptyFile(const std::string filename, unsigned long long filesize)
 {
-	// we'll need to error check this
+	// Create an empty file of filesize bytes
+	// We'll use this to create the files before we fill them in, and also
+	//  to create our empty bitfield file
 	std::ofstream ofs(filename, std::ios::binary | std::ios::out);
-	// 300 mb, we want this to be something else
 	ofs.seekp(filesize - 1);
 	ofs.write("", 1);
 }
 
 void fileio::createDirectory(const std::string dir)
 {
+	// Create a directory, we'll use this to design the directories that
+	// we're going to put all the files in.
 	if (CreateDirectoryA((LPCSTR)dir.c_str(), NULL) != 0)
 	{
 		std::cout << "Error creating directory " << dir << ": " << GetLastError();
+		// TODO: We don't want to exit out of ANY FUNCTIONS since we need to
+		// send stop signals in our main program, gather threads, write out bitfield,
+		// etc. etc.
 		exit(EXIT_FAILURE);
 	}
 }

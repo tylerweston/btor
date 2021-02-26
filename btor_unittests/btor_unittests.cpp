@@ -9,7 +9,7 @@ using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace btorunittests
 {
-	TEST_CLASS(btorunittests)
+	TEST_CLASS(BObjectsUnittests)
 	{
 	public:
 		
@@ -20,6 +20,12 @@ namespace btorunittests
 			Assert::AreEqual(*bint.getInt(), expected);
 		}
 
+		TEST_METHOD(BObject_BString_Test)
+		{
+			BObject bstr("Test String");
+			const char* expected = "Test String";
+			Assert::AreEqual(*bstr.getString()->c_str(), *expected);
+		}
 		TEST_METHOD(BObject_BList_Length_Test)
 		{
 			BObject blist(BObject_t::BList);
@@ -29,18 +35,33 @@ namespace btorunittests
 			blist.pushBack(&bstr);
 			Assert::AreEqual(blist.getLength(), (unsigned int) 2);
 		}
-		// TODO: More unit tests!
-		//be::BObject bstr("test bstring");
-		//be::BObject bint(42);
-		//be::BObject bdict(be::BObject_t::BDict);
-		//be::BObject blist(be::BObject_t::BList);
-		//blist.pushBack(bint);
-		//blist.pushBack(bstr);
-		//bdict.addKeyValue("key1", std::string("string value"));
-		//bdict.addKeyValue("key2", blist);
 
-		//std::cout << bstr << '\n';	// "test bstring"
-		//std::cout << bint << '\n';	// 42
-		//std::cout << bdict << '\n'; // {"key1"-> "string value", "key2"-> [42, "test bstring]}
+		TEST_METHOD(BObject_BDict_Add_and_Get_key)
+		{
+			BObject bdict(BObject_t::BDict);
+			BObject bint(12);
+			BObject bstr("Test");
+			bdict.addKeyValue("int_key", &bint);
+			bdict.addKeyValue("str_key", &bstr);
+			Assert::AreEqual(bdict.getLength(), (unsigned int)2);
+			Assert::IsTrue(bdict.checkIfHasKey("int_key"));
+			Assert::IsTrue(bdict.checkIfHasKey("str_key"));
+		}
+
+		TEST_METHOD(BObject_BDict_GetLength_Error)
+		{
+			BObject bint(12);
+			auto func = [bint] { bint.getLength(); };
+			Assert::ExpectException<BTypeException>(func);
+		}
+
+		TEST_METHOD(BObject_BDict_Get_Nonexistent_Key)
+		{
+			BObject bdict(BObject_t::BDict);
+			BObject bint(12);
+			bdict.addKeyValue("int_key", &bint);
+			auto func = [bdict] {bdict.getByKey("non_key");};
+			Assert::ExpectException<BDictKeyException>(func);
+		}
 	};
 }

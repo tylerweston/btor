@@ -37,7 +37,7 @@ std::string buildAnnounceParameters(Metainfo& metainfo, std::string peer_id, std
     const std::string encodedHash = urlEncode(hash);
     // build our announce path
     return "?info_hash=" + encodedHash + "&peer_id=" + peer_id +
-        "&uploaded=0&downloaded=0&left=" + std::to_string(metainfo.totallength) + "&event=" + bEvent + "&port=6886";
+        "&uploaded=0&downloaded=0&left=" + std::to_string(metainfo.total_length) + "&event=" + bEvent + "&port=6886";
 }
 
 std::string getServerAddress(std::string announceUrl)
@@ -48,6 +48,7 @@ std::string getServerAddress(std::string announceUrl)
     if (pathSeperatorIndex == std::string::npos)
     {
         std::cerr << "Error: Cannot extract server address from " << announceUrl << '\n';
+        // This should throw so we can clean up (ie, send stop)
         exit(EXIT_FAILURE);
     }
     return announceUrl.substr(0, pathSeperatorIndex);
@@ -61,6 +62,7 @@ std::string getAnnouncePath(std::string announceUrl)
     if (pathSeperatorIndex == std::string::npos)
     {
         std::cerr << "Error: Cannot extract announce path from " << announceUrl << '\n';
+        // This should throw so we can clean up
         exit(EXIT_FAILURE);
     }
     return announceUrl.substr(pathSeperatorIndex + 1);

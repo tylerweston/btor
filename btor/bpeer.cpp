@@ -32,12 +32,11 @@ std::string BPeer::getHandshake(BState* state)
 {
 	// <pstrlen><pstr><reserved><info_hash><peer_d>
 	// in version 1.0 of bittorrent protocol, pstrlen = 49, pstr = "BitTorrent protocol"
-	std::string hash = state->metainfo->info_hash_hex;	// this will need to be info_hash_raw
 	// PROBLEM: Hash here is 40 chars long? That doesn't seem right?
 	// hash is in HEX, it should be chars?
 	std::string shake = "5BitTorrent protocol00000000";
 	for (auto& c : state->metainfo->info_hash_raw)	// TODO: better way to do this, memcpy or something?
 		shake += c;
-	shake += state->uniqueId;
+	shake += state->unique_id;
 	return shake;
 }

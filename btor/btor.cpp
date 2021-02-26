@@ -12,6 +12,7 @@
 #include <iostream>
 #include <stdlib.h>
 #include <bit>
+#include <string>
 
 #define DEBUG	// make #define NDEBUG to remove assertions!
 #include <assert.h>
@@ -27,7 +28,6 @@ BOOL WINAPI CtrlHandler(DWORD fdwCtrlType)
 {
 	if (fdwCtrlType == CTRL_C_EVENT)
 	{
-		std::cout << "Ctrl-c pressed\n";
 		exitRequested = 1;
 		return true;
 	}
@@ -58,12 +58,12 @@ int main()
 	if constexpr (std::endian::native == std::endian::big)
 	{
 		std::cout << "Big-endian detected\n";
-		state.bigEndian = true;
+		state.big_endian = true;
 	}
 	else
 	{
 		std::cout << "Small-endian detected\n";
-		state.bigEndian = false;
+		state.big_endian = false;
 	}
 
 	// TODO: Process command line args, take in at least a torrent
@@ -71,7 +71,7 @@ int main()
 
 
 	// we use ONE unique id per session, so let's generate it now
-	state.uniqueId = generateId();
+	state.unique_id = generateId();
 
 	std::cout << "\n";
 	std::cout << "- - - - - - - - - -\n";
@@ -89,8 +89,8 @@ int main()
 	Metainfo metainfo;
 	const std::string input = bParser.getCollectedInfoDict();
 	metainfo.infodict = bParser.getCollectedInfoDict();
-	metainfo.totallength = bParser.getCollectedLength();
-	metainfo.piecelength = *root->getByKey("info")->getByKey("piece length")->getInt();
+	metainfo.total_length = bParser.getCollectedLength();
+	metainfo.piece_length = *root->getByKey("info")->getByKey("piece length")->getInt();
 	metainfo.announce = *root->getByKey("announce")->getString();
 	getSHA1(metainfo);	// this will fill our metainfo dict with the info_hash_hex
 	state.metainfo = &metainfo;
@@ -129,7 +129,7 @@ int main()
 	// it to the announcer!
 
 	// send a start request
-	auto builtAddress = buildAnnounceParameters(metainfo, state.uniqueId, "started");
+	auto builtAddress = buildAnnounceParameters(metainfo, state.unique_id, "started");
 	auto serverAddr = getServerAddress(metainfo.announce);
 	auto announcePath = getAnnouncePath(metainfo.announce);
 
@@ -227,19 +227,8 @@ int main()
 	// once we get here, we'll have a vector of BPeer objects that will hold their own
 	// addresses
 
-	/*
-	std::cout << "Peer addresses:\n";
-	bool first = true;
-	for (auto& peer : peerList)
-	{
-		if (not first)
-			std::cout << ", ";
-		first = false;
-		std::cout << peer;
-	}
-	std::cout << '\n';
-	*/
-
+	// we'll want to make this whatever TYPE we are sending through the socket
+	// so probably unsigned char[]?
 	std::string shake = BPeer::getHandshake(&state);	// can we use a string here?
 	// or should we use uint8_t or something?
 	assert(shake.size() == 68);
@@ -253,10 +242,23 @@ int main()
 	// one torrent at a time, this isn't something for us to worry about!
 	
 	// We send out handshakes to all the peers first and then wait to hear back from them? 
+	float percentage_done = 0.0;
+	ShowConsoleCursor(false);
+	std::cout << "[..........]";
 	while (exitRequested != 1)
 	{
 		// here is where we try to meet peers. We'll send them a handshake first.
 		// this will happen in threads
+
+		// for now just bluff some action in this loop while we spin!
+		percentage_done += 0.00001;
+		show_status(percentage_done);
+		if (percentage_done >= 1.0)
+			exitRequested = true;
+		// we'll want to show the actual amount received and what not here
+		// plus the speeds we are downloading and uploading
+		// might want to use curses for this? PDCurses is the windows version?
+
 
 		// connect to a peer discovered by the announcer
 		// create a socket for the peer
@@ -268,17 +270,19 @@ int main()
 		// - incoming handshake request? what is this?
 		// - any other of the possible messages
 	}
-	// clean up threads?
+	std::cout << '\n';
 
+	// clean up threads?
+	ShowConsoleCursor(true);
 
 	// send stop message
 	// todo: refactor messaging the announcer here since the only difference between these bottom couple
 	// lines and the initail started event is the last param. of this buildAnnounceParameters thing.
-	builtAddress = buildAnnounceParameters(metainfo, state.uniqueId, "stopped");
+	builtAddress = buildAnnounceParameters(metainfo, state.unique_id, "stopped");
 	std::cout << "Sending stop request... ";
 	response = makeGetRequest(serverAddr, "/" + announcePath + builtAddress);	// problem here sometimes, is the request response too big or something? maybe it isn't completed?
 	// TODO: check response
 	std::cout << " done\n";
+
 	exit(EXIT_SUCCESS);
 }
-

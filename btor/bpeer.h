@@ -7,7 +7,7 @@
 
 //Data Types
 // Unless specified otherwise, all integers in the peer wire protocol are encoded as four byte big - endian values.
-// This includes the length prefix on all messages that come after the handshake.
+// This includes the length prefix on all messages that come AFTER the handshake.
 
 // The peer wire protocol consists of an initial handshake. After that, peers communicate via an exchange of 
 // length-prefixed messages. The length-prefix is an integer as described above.
@@ -61,6 +61,7 @@
 class BPeer
 {
 private:
+	// these are the initial values of a peer upon connection
 	bool amChoking = true;
 	bool amInterested = false;
 	bool peerChoking = true;		// when a peer is choking us, we don't send them messages and discard unanswered requests
@@ -137,4 +138,3 @@ to ALL peers. Send cancels for sub-pieces which arrive so we don't download redu
 
 
 */
-
