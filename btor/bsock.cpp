@@ -7,26 +7,12 @@
 BSock::~BSock()
 {
 	std::cout << "Closing TCP socket...";
+	WSACleanup();
 }
 
-BSock::BSock()
+int BSock::OpenSocket()
 {
-	std::cout << "Opening TCP socket...";
-	// so far this is all just based on the microsoft tutorials to get it up and running
-	WSADATA wsaData;
-
 	int iResult;
-
-	// init Winsock
-	iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
-	if (iResult != 0)
-	{
-		std::cout << "WSAStartup failed: " << iResult << '\n';
-		// TODO: Throw here? Try again? We can't do much if we don't have a socket?
-		exit(EXIT_FAILURE);
-	}
-	// next step for servers: https://docs.microsoft.com/en-us/windows/win32/winsock/creating-a-socket-for-the-server
-
 	struct addrinfo* result = NULL, * ptr = NULL, hints;
 
 	ZeroMemory(&hints, sizeof(hints));
@@ -41,21 +27,19 @@ BSock::BSock()
 	{
 		std::cout << "getaddrinfo failed: " << iResult << '\n';
 		WSACleanup();
-		exit(EXIT_FAILURE);
+		return -1;
 	}
 	else
 	{
 		std::cout << "Trying to connect on " << result->ai_addr << '\n';
 	}
 
-	return;
-
 	/*
-	If the server application wants to listen on IPv6, then the address family needs to be set to AF_INET6 in the hints parameter. 
-	If a server wants to listen on both IPv6 and IPv4, two listen sockets must be created, one for IPv6 and one for IPv4. 
+	If the server application wants to listen on IPv6, then the address family needs to be set to AF_INET6 in the hints parameter.
+	If a server wants to listen on both IPv6 and IPv4, two listen sockets must be created, one for IPv6 and one for IPv4.
 	These two sockets must be handled separately by the application.
 
-	Windows Vista and later offer the ability to create a single IPv6 socket that is put in dual stack mode to listen on both IPv6 and IPv4. 
+	Windows Vista and later offer the ability to create a single IPv6 socket that is put in dual stack mode to listen on both IPv6 and IPv4.
 	For more information on this feature, see Dual-Stack Sockets. https://docs.microsoft.com/en-us/windows/win32/winsock/dual-stack-sockets
 	*/
 	_socket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
@@ -67,7 +51,7 @@ BSock::BSock()
 		std::cout << "Error at socket(): " << WSAGetLastError() << '\n';
 		freeaddrinfo(result);	// make result a private member
 		WSACleanup();			// call this when we destroy this object
-		exit(EXIT_FAILURE);
+		return -1;
 	}
 
 	// bind our socket, aka setup the TCP listening socket
@@ -78,13 +62,13 @@ BSock::BSock()
 		freeaddrinfo(result);
 		closesocket(_socket);
 		WSACleanup();
-		exit(EXIT_FAILURE);
+		return -1;
 	}
 
 	// once we're bound, we no longer need result:
 	freeaddrinfo(result);
 
-	// to listen on a socket:
+	// place socket into listening mode
 	if (listen(_socket, SOMAXCONN) == SOCKET_ERROR)
 	{
 		std::cout << "Listen failed: " << WSAGetLastError() << '\n';
@@ -92,95 +76,29 @@ BSock::BSock()
 		WSACleanup();
 		exit(EXIT_FAILURE);
 	}
+	return 0;
+}
 
-	// here this is a single thread, we will accept connection in multiple threads though!
-	// TODO: Multiple threads!
-	SOCKET clientSocket;
+BSock::BSock()
+{
+	// Move the socket opening to another function so that we can properly evaluate whether
+	// we have been able to open a socket or not?
+	std::cout << "Opening TCP socket... ";
+	// so far this is all just based on the microsoft tutorials to get it up and running
 
-	clientSocket = INVALID_SOCKET;
 
-	//// accept!
-	//clientSocket = accept(_socket, NULL, NULL);
-	//// after we've connected we should get a handshake?
-	//if (clientSocket == INVALID_SOCKET)
-	//{
-	//	std::cout << "Accept failed: " << WSAGetLastError() << '\n';
-	//	closesocket(_socket);
-	//	WSACleanup();
-	//	exit(EXIT_FAILURE);
-	//}
-	// https://stackoverflow.com/questions/15185380/tcp-winsock-accept-multiple-connections-clients
-	while ((clientSocket = accept(_socket, NULL, NULL))) {
-		// Create a new thread for the accepted client (also pass the accepted client socket).
-		unsigned threadID;
-		// hmm vvv doesn't work.
-		// HANDLE hThread = (HANDLE)_beginthreadex(NULL, 0, &ClientSession, (void*)clientSocket, 0, &threadID);
-	}
+	int iResult;
 
-	// look at: https://docs.microsoft.com/en-us/windows/win32/winsock/getting-started-with-winsock <- advanced winsock samples
-	// for ideas of how to make this multi-threaded. For now, once we accept a connection, just start using it!
-	// eventually though, a new connection will spawn a new thread to handle that connection?
-	
-	// to receive and send data on a socket
-
-#define DEFAULT_BUFLEN 512
-
-	char recvbuf[DEFAULT_BUFLEN];
-	int iSendResult;
-	int recvbuflen = DEFAULT_BUFLEN;
-
-	// receive until peer shuts down connection
-	do
+	// init Winsock
+	iResult = WSAStartup(MAKEWORD(2, 2), &this->wsaData);
+	if (iResult != 0)
 	{
-		// recv and send both return number of bytes transmitted
-		// both take a socket, the receiving buffer, the number of bytes to send
-		// and any flags to use.
-		iResult = recv(clientSocket, recvbuf, recvbuflen, 0);
-		if (iResult > 0)
-		{
-			std::cout << "Received " << iResult << " bytes\n";
-
-			// echo results back to sender
-			iSendResult = send(clientSocket, recvbuf, iResult, 0);
-			if (iSendResult == SOCKET_ERROR)
-			{
-				std::cout << "Send failed! " << WSAGetLastError() << '\n';
-				closesocket(clientSocket);
-				WSACleanup();
-				exit(EXIT_FAILURE);
-			}
-			std::cout << "Sent: " << iResult << " bytes.\n";
-		}
-		else if (iResult == 0)
-		{
-			std::cout << "Connection closing...\n";
-		}
-		else
-		{
-			std::cout << "Recv failed! " << WSAGetLastError() << '\n';
-			closesocket(clientSocket);
-			WSACleanup();
-			exit(EXIT_FAILURE);
-		}
-	} while (iResult > 0);
-
-cleanup_and_end:
-	// This will happen in an individual peer block
-	// shutdown the sending side of the socket (ie, the other side)
-	iResult = shutdown(clientSocket, SD_SEND);
-	if (iResult == SOCKET_ERROR)
-	{
-		std::cout << "Shutdown failed! " << WSAGetLastError() << '\n';
-		closesocket(clientSocket);
-		WSACleanup();
+		std::cout << "WSAStartup failed: " << iResult << '\n';
+		// TODO: Throw here? Try again? We can't do much if we don't have a socket?
 		exit(EXIT_FAILURE);
 	}
 
-	closesocket(clientSocket);
-	WSACleanup();
-	
-
-	// next step for clients: https://docs.microsoft.com/en-us/windows/win32/winsock/creating-a-socket-for-the-client
+	std::cout << "done\n";
 }
 
 void BSock::MakeConnection(BPeer& peer)

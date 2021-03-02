@@ -5,6 +5,10 @@
 #include <WinSock2.h>
 #include <btor.h>
 
+
+#define DEFAULT_BUFLEN 512	// move elsewhere
+
+
 //Data Types
 // Unless specified otherwise, all integers in the peer wire protocol are encoded as four byte big - endian values.
 // This includes the length prefix on all messages that come AFTER the handshake.
@@ -46,6 +50,7 @@
 class BPeer
 {
 private:
+	int peer_num_id;
 	// these are the initial values of a peer upon connection
 	bool amChoking = true;
 	bool amInterested = false;
@@ -53,13 +58,16 @@ private:
 	bool peerInterested = false;
 	std::string _id;
 	sockaddr_in peerAddress;		// hold the connection info for this peer
-	// socket? Is it one global socket? How does that work?
+	SOCKET peerSocket;				// one socket per connection
 	// each peer should keep track of it's own has bitfield
 	// connection state
 	// incomplete message data?
+	std::string readable_ip;
+	int port;
 public:
 	sockaddr_in* getPeerAddress() { return &this->peerAddress; }
-	BPeer(std::string ipaddr, unsigned short port);
+	BPeer(std::string ipaddr, unsigned short port, int peer_num_id);
+	~BPeer();
 	bool getAmChoking() { return this->amChoking; }
 	bool getAmInterested() { return this->amInterested; }
 	bool getPeerChoking() { return this->peerChoking; }
@@ -68,7 +76,15 @@ public:
 	void setAmInterested(bool val) { this->amInterested = val; }
 	void setPeerChoking(bool val) { this->peerChoking = val; }
 	void setPeerInterested(bool val) { this->peerInterested = val; }
+	int tryConnect();
+	// int tryAccept(SOCKET ourSocket);
+	int tryReceive();
+	int sendMessage(const char* msg);
+	int closeConnection();
 	static std::string getHandshake(BState* state);
+	// A peer will want to gather bits of data until it has enough to fill a certain
+	// sized buffer or something like that. After which it will hash the data, check
+	// it against the stored piece hash, and write it out to the proper file?
 };
 
 // messages?
@@ -111,6 +127,5 @@ When we're starting, download a random piece until we have ONE full piece, then 
 Endgame mode:
 Once all sub-pieces which you don't have are actvely being requested, send requests for ALL sub-pieces
 to ALL peers. Send cancels for sub-pieces which arrive so we don't download redundant data.
-
 
 */

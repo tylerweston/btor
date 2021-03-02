@@ -7,6 +7,9 @@
 #include "btor.h"
 #include "bencode.h"
 
+// FormatMessage for getting readable results from WSAGetLastError?
+// https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-formatmessage
+
 // verify block hash?
 std::string generateId();
 void getSHA1(Metainfo& metainfo);

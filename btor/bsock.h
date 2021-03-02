@@ -12,10 +12,12 @@
 class BSock
 {
 private:
+	WSADATA wsaData;
 	SOCKET _socket = INVALID_SOCKET;
 public:
 	BSock();
 	~BSock();
+	int OpenSocket();
 	void MakeConnection(BPeer& peer);
 };
 

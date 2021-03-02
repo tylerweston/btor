@@ -47,6 +47,7 @@ int main()
 	BMemoryManager bMemoryManager;
 	BParser bParser;
 	fileio fileManager;
+	BSock sock;
 
 	if (!SetConsoleCtrlHandler(CtrlHandler, TRUE))
 	{
@@ -57,7 +58,8 @@ int main()
 	ShowConsoleCursor(false);
 
 	// detect if we are big-endian or not
-	// todo: will we need to do this or always just use ntohl or whatnot?
+	// todo: will we need to do this or always just use ntohl or whatnot? <--- 
+	// yes, for portable code just use ntohl and htonl
 	std::cout << "Detecting endianness: ";
 	if constexpr (std::endian::native == std::endian::big)
 	{
@@ -175,7 +177,7 @@ int main()
 	BObject_t dictType = serverResponseParser->getByKey("peers")->getType();
 
 	std::vector<BObject*> peers;
-	std::vector<BPeer> bpeers;
+	std::vector<BPeer*> bpeers;
 
 	if (dictType == BObject_t::BString)	// binary packed peers
 	{
@@ -220,16 +222,19 @@ int main()
 			port: peer's port number (integer)
 		*/
 		peers = *serverResponseParser->getByKey("peers")->getList();
+		int id = 0;
 		for (auto& p : peers)
 		{
 			std::string peerIP = *p->getByKey("ip")->getString();
 			int port = *p->getByKey("port")->getInt();
-			bpeers.push_back(BPeer(peerIP, port));
+			bpeers.push_back(new BPeer(peerIP, port, id++));
 		}
 	}
 
 	// once we get here, we'll have a vector of BPeer objects that will hold their own
 	// addresses
+
+
 
 	// we'll want to make this whatever TYPE we are sending through the socket
 	// so probably unsigned char[]?
@@ -238,19 +243,32 @@ int main()
 	assert(shake.size() == 68);
 	std::cout << "Generated handshake...\n";
 
+	// OK, let's grab the first peer from our list and see if we can connect to them
+	int break_early = 0;
+	for (auto& p : bpeers)
+	{
+		p->tryConnect();
+		if (++break_early > 5) break;
+	}
+
+	// Once we connect, we'll send them our handshake!
+
 	// main loop
-	std::cout << "In main loop (ctrl-c to break)\n";
+	// std::cout << "In main loop (ctrl-c to break)\n";
 	// when we're here we need a socket that we can listen in on and send messages out of?
 	// initiator of a handshake is expected to transmit a handshake immediately.
 	// note for the future: separate torrents are on separate TCP connections! Since we're only going to do
 	// one torrent at a time, this isn't something for us to worry about!
 	
 	// We send out handshakes to all the peers first and then wait to hear back from them? 
-	float percentage_done = 0.0;
+	// float percentage_done = 0.0;
 
 
-	BSock bsock;
 
+
+	//BSock bsock;
+
+	/*
 	std::cout << "[....................]";
 	
 	while (exitRequested != 1)
@@ -279,6 +297,12 @@ int main()
 		// - any other of the possible messages
 	}
 	std::cout << '\n';
+	*/
+
+
+	// Erase peers
+	for (auto& p : peers)
+		delete(p);
 
 	// clean up threads?
 	ShowConsoleCursor(true);
